@@ -1,0 +1,8 @@
+## Ignore Visual Studio & .NET temporary files
+.vs/
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+appsettings.Development.json
