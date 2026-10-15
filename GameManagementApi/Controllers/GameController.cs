@@ -1,6 +1,7 @@
 ﻿using GameManagement.Application.DTOs;
 using GameManagement.Application.Interfaces;
 using GameManagement.Application.Repositories;
+using GameManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,11 +21,16 @@ namespace GameManagementApi.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? keyword,
+            [FromQuery] GameStatus? trangThai,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
-            var game = await _gameService.GetAllAsync();
+            var games = await _gameService.GetAllAsync(
+                keyword, trangThai, pageNumber, pageSize);
 
-            return Ok(game);
+            return Ok(games);
         }
 
         [HttpGet("{id}")]
@@ -53,8 +59,8 @@ namespace GameManagementApi.Controllers
 
         [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN")]
-        public async Task<IActionResult> Update(int id, UpdateGameDto dto)
-        { 
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateGameDto dto)
+        {
             var game = await _gameService.UpdateAsync(id, dto);
 
             if (game == null)
@@ -62,5 +68,45 @@ namespace GameManagementApi.Controllers
 
             return Ok(game);
         }
+
+        [HttpPatch("{id:int}/status")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> UpdateStatus(
+            int id,
+            [FromBody] UpdateGameStatusDto dto)
+        {
+            var game = await _gameService.UpdateStatusAsync(id, dto);
+
+            if (game == null)
+            {
+                return NotFound(new
+                {
+                    message = "Không tìm thấy Game."
+                });
+            }
+
+            return Ok(game);
+        }
+
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "ADMIN")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted = await _gameService.DeleteAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound(new
+                {
+                    message = "Game không tồn tại hoặc đã bị xóa."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "Xóa Game thành công."
+            });
+        }
+
     }
 }

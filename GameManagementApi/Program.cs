@@ -7,9 +7,12 @@ using GameManagement.Infrastructure.Data;
 using GameManagement.Infrastructure.Repositories;
 using GameManagement.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +46,32 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtSettings.Key))
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var accountIdValue = context.Principal?
+                    .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (!int.TryParse(accountIdValue, out var accountId))
+                {
+                    context.Fail("Token không chứa AccountId hợp lệ.");
+                    return;
+                }
+
+                var accountRepository = context.HttpContext.RequestServices
+                    .GetRequiredService<IAccountRepository>();
+
+                var isActive = await accountRepository
+                    .IsAccountActiveAsync(accountId);
+
+                if (!isActive)
+                {
+                    context.Fail("Tài khoản không tồn tại hoặc đã bị khóa.");
+                }
+            }
+        };
     });
 
 // =========================================================================
@@ -50,7 +79,56 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // =========================================================================
 
 // Add services to the container.
-builder.Services.AddControllers();
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter());
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = new Dictionary<string, string[]>();
+
+            foreach (var entry in context.ModelState)
+            {
+                var messages = new List<string>();
+
+                foreach (var error in entry.Value?.Errors
+                             ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.ModelBinding.ModelError>())
+                {
+                    var message = error.ErrorMessage;
+
+                    if (entry.Key.Contains("coServer",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        message = "CoServer phải có giá trị true hoặc false.";
+                    }
+                    else if (entry.Key.Contains("trangThaiGame",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        message = "Trạng thái Game không hợp lệ. Chỉ chấp nhận HOAT_DONG hoặc BAO_TRI.";
+                    }
+
+                    messages.Add(message);
+                }
+
+                if (messages.Count > 0)
+                {
+                    errors[entry.Key] = messages.ToArray();
+                }
+            }
+
+            return new BadRequestObjectResult(new
+            {
+                message = "Dữ liệu gửi lên không hợp lệ.",
+                errors
+            });
+        };
+    });
+
 
 // Đăng ký sử dụng Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -93,10 +171,15 @@ builder.Services.AddHttpContextAccessor();
 // 4. ĐĂNG KÝ DEPENDENCY INJECTION (DI)
 // =========================================================================
 
+builder.Services.AddSingleton<SqlConnectionFactory>();
 // Module Tài khoản & Xác thực
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+
+//Module User
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Module Game
 builder.Services.AddScoped<IGameService, GameService>();

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
+﻿using GameManagement.Domain.Enums;
 namespace GameManagement.Domain.Entities;
 
 public partial class Game
@@ -9,7 +7,8 @@ public partial class Game
 
     public string TenGame { get; set; } = null!;
 
-    public string TrangThaiGame { get; set; } = null!;
+    public GameStatus TrangThaiGame { get; set; }
+    public bool DaXoa { get; set; } = false;
 
     public bool CoServer { get; set; }
 

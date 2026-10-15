@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GameManagement.Application.DTOs;
+﻿using GameManagement.Application.DTOs;
+using GameManagement.Domain.Enums;
 
 namespace GameManagement.Application.Interfaces;
 
 public interface IGameService
 {
-    Task<List<GameDto>> GetAllAsync();
+    Task<PagedResultDto<GameDto>> GetAllAsync(string? keyword,GameStatus? trangThai,int pageNumber,int pageSize);
     Task<GameDto?> GetByIdAsync(int id);
     Task<GameDto> CreateAsync(CreateGameDto dto);
     Task<GameDto?> UpdateAsync(int id, UpdateGameDto dto);
+    Task<GameDto?> UpdateStatusAsync(int id, UpdateGameStatusDto dto);
+    Task<bool> DeleteAsync(int id);
 }

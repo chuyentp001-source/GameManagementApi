@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using GameManagement.Domain.Enums;
 namespace GameManagement.Domain.Entities;
 
 public partial class Account
@@ -12,9 +11,10 @@ public partial class Account
 
     public decimal SoDu { get; set; }
 
-    public string Role { get; set; } = null!;
+    public AccountRole Role { get; set; }
 
-    public string TrangThai { get; set; } = null!;
+    public AccountStatus TrangThai { get; set; }
+    public bool DaXoa { get; set; } = false;
 
     public int? NguoiTaoId { get; set; }
 
@@ -22,7 +22,7 @@ public partial class Account
 
     public DateTime NgayTao { get; set; }
 
-    public DateTime NgayCapNhat { get; set; }
+    public DateTime? NgayCapNhat { get; set; }
 
     public virtual ICollection<ChietKhau> ChietKhauNguoiCapNhats { get; set; } = new List<ChietKhau>();
 

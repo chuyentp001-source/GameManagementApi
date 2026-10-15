@@ -1,76 +1,88 @@
-﻿using GameManagement.Application.Exceptions;
+﻿
+using GameManagement.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
-namespace GameManagement.Application.ExceptionHandlers
+namespace GameManagement.Application.ExceptionHandlers;
+
+public class GlobalExceptionHandler
 {
-    /// <summary>
-    /// Middleware bắt lỗi toàn cục (Global Exception Handler).
-    /// Giúp bắt các ngoại lệ (Exception) quăng ra từ Service/Controller 
-    /// và trả về cho Client phản hồi JSON chuẩn cùng mã HTTP Status Code phù hợp.
-    /// </summary>
-    public class GlobalExceptionHandler
+    private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionHandler> _logger;
+
+    public GlobalExceptionHandler(
+        RequestDelegate next,
+        ILogger<GlobalExceptionHandler> logger)
     {
-        // _next đại diện cho Middleware tiếp theo trong pipeline xử lý HTTP request của ASP.NET Core
-        private readonly RequestDelegate _next;
+        _next = next;
+        _logger = logger;
+    }
 
-        public GlobalExceptionHandler(RequestDelegate next)
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
         {
-            _next = next;
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi xử lý request: {Message}",
+                ex.Message);
+
+            if (context.Response.HasStarted)
+            {
+                throw;
+            }
+
+            await HandleExceptionAsync(context, ex);
+        }
+    }
+
+    private static async Task HandleExceptionAsync(
+        HttpContext context,
+        Exception exception)
+    {
+        int statusCode;
+        string message;
+
+        switch (exception)
+        {
+            case DuplicateException ex:
+                statusCode = StatusCodes.Status409Conflict;
+                message = ex.Message;
+                break;
+
+            case GameNotFoundException ex:
+                statusCode = StatusCodes.Status404NotFound;
+                message = ex.Message;
+                break;
+
+            case GameInactiveException ex:
+                statusCode = StatusCodes.Status400BadRequest;
+                message = ex.Message;
+                break;
+
+            case InvalidGoiNapException ex:
+                statusCode = StatusCodes.Status400BadRequest;
+                message = ex.Message;
+                break;
+
+            default:
+                statusCode = StatusCodes.Status500InternalServerError;
+                message = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";
+                break;
         }
 
-        /// <summary>
-        /// Phương thức chính được ASP.NET Core tự động gọi khi có request đi qua Middleware
-        /// </summary>
-        public async Task InvokeAsync(HttpContext context)
+        context.Response.Clear();
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json; charset=utf-8";
+
+        await context.Response.WriteAsJsonAsync(new
         {
-            try
-            {
-                // Cho phép Request đi tiếp sang các Middleware / Controller tiếp theo
-                await _next(context);
-            }
-            // 1. Xử lý lỗi trùng lặp dữ liệu (ví dụ: Tên tài khoản hoặc dữ liệu đã tồn tại)
-            catch (DuplicateException ex)
-            {
-                context.Response.StatusCode = StatusCodes.Status409Conflict; // 409 Conflict: Trùng dữ liệu
-                context.Response.ContentType = "application/json";
-
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    message = ex.Message
-                });
-            }
-            // 2. Xử lý lỗi không tìm thấy Game (ví dụ: Truyền GameId không có trong DB)
-            catch (GameNotFoundException ex)
-            {
-                context.Response.StatusCode = StatusCodes.Status404NotFound; // 404 Not Found: Không tìm thấy tài nguyên
-                context.Response.ContentType = "application/json";
-
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    message = ex.Message
-                });
-            }
-            // 3. Xử lý lỗi Game ngừng hoạt động hoặc đang bảo trì (không cho phép tạo gói nạp / đơn hàng)
-            catch (GameInactiveException ex)
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest; // 400 Bad Request: Yêu cầu không hợp lệ do vi phạm logic nghiệp vụ
-                context.Response.ContentType = "application/json";
-
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    message = ex.Message
-                });
-            }
-            catch (InvalidGoiNapException ex)
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                context.Response.ContentType = "application/json";
-
-                await context.Response.WriteAsJsonAsync(new
-                {
-                    message = ex.Message
-                });
-            }
-        }
+            status = statusCode,
+            message
+        });
     }
 }

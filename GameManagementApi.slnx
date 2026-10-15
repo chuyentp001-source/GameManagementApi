@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
   <Project Path="GameManagement.Application/GameManagement.Application.csproj" />
   <Project Path="GameManagement.Domain/GameManagement.Domain.csproj" />
   <Project Path="GameManagement.Infrastructure/GameManagement.Infrastructure.csproj" />

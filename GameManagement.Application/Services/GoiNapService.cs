@@ -3,6 +3,7 @@ using GameManagement.Application.Exceptions;
 using GameManagement.Application.Interfaces;
 using GameManagement.Application.Repositories;
 using GameManagement.Domain.Entities;
+using GameManagement.Domain.Enums;
 
 namespace GameManagement.Application.Services
 {
@@ -91,7 +92,7 @@ namespace GameManagement.Application.Services
                 throw new GameNotFoundException("Game không tồn tại");
 
             // 2. Kiểm tra Game có đang ở trạng thái hoạt động không (chỉ tạo gói cho game HOAT_DONG)
-            if (game.TrangThaiGame != "HOAT_DONG")
+            if (game.TrangThaiGame != GameStatus.HOAT_DONG)
                 throw new GameInactiveException("Game hiện không hoạt động");
 
             // 3. Ràng buộc nghiệp vụ: Giá gốc gói nạp không được nhỏ hơn 1,000 VNĐ

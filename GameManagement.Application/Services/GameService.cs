@@ -1,7 +1,9 @@
 ﻿using GameManagement.Application.DTOs;
+using GameManagement.Application.Exceptions;
 using GameManagement.Application.Interfaces;
 using GameManagement.Application.Repositories;
 using GameManagement.Domain.Entities;
+using GameManagement.Domain.Enums;
 
 namespace GameManagement.Application.Services
 {
@@ -26,24 +28,49 @@ namespace GameManagement.Application.Services
         /// <summary>
         /// Lấy danh sách tất cả các Game có trong hệ thống.
         /// </summary>
-        public async Task<List<GameDto>> GetAllAsync()
+        public async Task<PagedResultDto<GameDto>> GetAllAsync(
+            string? keyword,
+            GameStatus? trangThai,
+            int pageNumber,
+            int pageSize)
         {
-            // 1. Gọi Repository để lấy tất cả Entity Game từ Database
-            var games = await _gameRepository.GetAllAsync();
+            if (pageNumber < 1)
+                throw new ArgumentException("Số trang phải lớn hơn 0.");
 
-            // 2. Chuyển đổi (Map) danh sách Entity Game sang danh sách GameDto để trả về cho Client
-            return games.Select(x => new GameDto
+            if (pageSize < 1 || pageSize > 100)
+                throw new ArgumentException("Số bản ghi mỗi trang phải từ 1 đến 100.");
+
+            var result = await _gameRepository.GetAllAsync(
+                keyword, trangThai, pageNumber, pageSize);
+
+            var gameDtos = new List<GameDto>();
+
+            foreach (var game in result.Items)
             {
-                GameId = x.GameId,
-                TenGame = x.TenGame,
-                TrangThaiGame = x.TrangThaiGame,
-                CoServer = x.CoServer,
-                NguoiTaoID = x.NguoiTaoId,
-                NguoiCapNhatID = x.NguoiCapNhatId,
-                NgayTao = x.NgayTao,
-                NgayCapNhat = x.NgayCapNhat
-            }).ToList();
+                gameDtos.Add(new GameDto
+                {
+                    GameId = game.GameId,
+                    TenGame = game.TenGame,
+                    TrangThaiGame = game.TrangThaiGame,
+                    CoServer = game.CoServer,
+                    NguoiTaoID = game.NguoiTaoId,
+                    NguoiCapNhatID = game.NguoiCapNhatId,
+                    NgayTao = game.NgayTao,
+                    NgayCapNhat = game.NgayCapNhat
+                });
+            }
+
+            return new PagedResultDto<GameDto>
+            {
+                Items = gameDtos,
+                PageNumber = result.PageNumber,
+                PageSize = result.PageSize,
+                TotalRecords = result.TotalRecords,
+                TotalPages = result.TotalPages
+            };
         }
+
+
 
         /// <summary>
         /// Lấy thông tin chi tiết của một Game theo Id.
@@ -76,20 +103,17 @@ namespace GameManagement.Application.Services
         /// </summary>
         public async Task<GameDto> CreateAsync(CreateGameDto dto)
         {
-            // 1. Khởi tạo đối tượng Entity Game từ DTO được gửi từ Client
-            var games = new Game
+            var game = new Game
             {
                 TenGame = dto.TenGame,
-                CoServer = dto.CoServer,
-                TrangThaiGame = "HOAT_DONG", // Game mới tạo mặc định ở trạng thái HOAT_DONG
-                NguoiTaoId = _currentUserService.AccountId, // Tự động lấy AccountId của Admin đang đăng nhập từ JWT Token
-                NgayTao = DateTime.UtcNow       // Ghi nhận thời gian tạo
+                CoServer = dto.CoServer ?? false,
+                TrangThaiGame = GameStatus.HOAT_DONG,
+                NguoiTaoId = _currentUserService.AccountId,
+                NgayTao = DateTime.UtcNow
             };
 
-            // 2. Gọi Repository để lưu Entity Game mới vào Database
-            var createGame = await _gameRepository.CreateAsync(games);
+            var createGame = await _gameRepository.CreateAsync(game);
 
-            // 3. Trả về GameDto kèm các thông tin vừa được tạo thành công
             return new GameDto
             {
                 GameId = createGame.GameId,
@@ -117,8 +141,8 @@ namespace GameManagement.Application.Services
 
             // 3. Cập nhật các trường thông tin mới từ DTO vào Entity
             game.TenGame = dto.TenGame;
-            game.TrangThaiGame = dto.TrangThaiGame; // Ví dụ: Có thể đổi thành BAO_TRI hoặc NGUNG_HOAT_DONG
-            game.CoServer = dto.CoServer;
+            game.TrangThaiGame = dto.TrangThaiGame;
+            game.CoServer = dto.CoServer ?? false;
 
             // 4. Ghi nhận vết hệ thống (Audit field): Ai là người sửa và sửa vào lúc nào
             game.NguoiCapNhatId = _currentUserService.AccountId; // Tự động lấy AccountId của Admin thực hiện sửa
@@ -139,6 +163,42 @@ namespace GameManagement.Application.Services
                 NgayTao = updatedGame.NgayTao,
                 NgayCapNhat = updatedGame.NgayCapNhat
             };
+        }
+
+        public async Task<GameDto?> UpdateStatusAsync(int id,UpdateGameStatusDto dto)
+        {
+            if (!Enum.IsDefined(typeof(GameStatus), dto.TrangThaiGame))
+            {
+                throw new ArgumentException("Trạng thái Game không hợp lệ.");
+            }
+
+            var game = await _gameRepository.UpdateStatusAsync(
+                id,
+                dto.TrangThaiGame,
+                _currentUserService.AccountId);
+
+            if (game == null)
+            {
+                return null;
+            }
+
+            return new GameDto
+            {
+                GameId = game.GameId,
+                TenGame = game.TenGame,
+                TrangThaiGame = game.TrangThaiGame,
+                CoServer = game.CoServer,
+                NguoiTaoID = game.NguoiTaoId,
+                NguoiCapNhatID = game.NguoiCapNhatId,
+                NgayTao = game.NgayTao,
+                NgayCapNhat = game.NgayCapNhat
+            };
+        }
+        public async Task<bool> DeleteAsync(int id)
+        {
+            return await _gameRepository.DeleteAsync(
+                id,
+                _currentUserService.AccountId);
         }
     }
 }
