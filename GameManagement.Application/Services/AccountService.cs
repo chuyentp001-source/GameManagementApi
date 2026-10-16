@@ -25,9 +25,9 @@ public class AccountService : IAccountService
     public async Task<PagedResultDto<AccountDto>> GetAllAsync(
         int pageNumber,
         int pageSize,
-        string? tenDangNhap,
-        string? role,
-        string? trangThai)
+        int? accountId,
+        AccountRole? role,
+        AccountStatus? trangThai)
     {
         if (pageNumber < 1)
             throw new ArgumentException(
@@ -37,24 +37,12 @@ public class AccountService : IAccountService
             throw new ArgumentException(
                 "Số tài khoản mỗi trang phải từ 1 đến 100.");
 
-        if (!string.IsNullOrWhiteSpace(role) &&
-            !Enum.TryParse<AccountRole>(role, true, out _))
-        {
-            throw new ArgumentException("Vai trò không hợp lệ.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(trangThai) &&
-            !Enum.TryParse<AccountStatus>(trangThai, true, out _))
-        {
-            throw new ArgumentException("Trạng thái tài khoản không hợp lệ.");
-        }
-
         var accountPage = await _accountRepository.GetAllAsync(
             pageNumber,
             pageSize,
-            tenDangNhap,
-            role,
-            trangThai);
+            accountId,
+            role?.ToString(),
+            trangThai?.ToString());
 
         var items = new List<AccountDto>();
 
@@ -79,6 +67,7 @@ public class AccountService : IAccountService
             TotalPages = accountPage.TotalPages
         };
     }
+
 
 
     public async Task<MyAccountDto?> GetMeAsync(int accountId)
@@ -346,8 +335,15 @@ public class AccountService : IAccountService
                 "Không xác định được tài khoản đang đăng nhập.");
         }
 
+        if (accountId == nguoiCapNhatId.Value)
+        {
+            throw new InvalidOperationException(
+                "Không thể xóa tài khoản đang đăng nhập.");
+        }
+
         return await _accountRepository.DeleteAsync(
             accountId,
             nguoiCapNhatId.Value);
     }
+
 }

@@ -1,6 +1,7 @@
 ﻿using GameManagement.Application.DTOs;
 using GameManagement.Application.Exceptions;
 using GameManagement.Application.Interfaces;
+using GameManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -18,22 +19,21 @@ public class AccountController : ControllerBase
         _accountService = accountService;
     }
 
-
-    [HttpGet("ADMIN")]
+    [HttpGet("XEM DANH SAASHC TÀI KHOẢN/ADMIN")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> GetAll(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] string? tenDangNhap = null,
-        [FromQuery] string? role = null,
-        [FromQuery] string? trangThai = null)
+        [FromQuery] int? accountId = null,
+        [FromQuery] AccountRole? role = null,
+        [FromQuery] AccountStatus? trangThai = null)
     {
         try
         {
             var accounts = await _accountService.GetAllAsync(
                 pageNumber,
                 pageSize,
-                tenDangNhap,
+                accountId,
                 role,
                 trangThai);
 
@@ -45,8 +45,7 @@ public class AccountController : ControllerBase
         }
     }
 
-
-    [HttpGet("me")]
+    [HttpGet("XEM THÔNG TIN ACCOUNT ĐANG LOGIN")]
     [Authorize]
     public async Task<IActionResult> GetMe()
     {
@@ -74,7 +73,7 @@ public class AccountController : ControllerBase
         return Ok(account);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("TÌM KIẾM THEO {id}/ADMIN")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -87,7 +86,7 @@ public class AccountController : ControllerBase
     }
 
 
-    [HttpPost("Register")]
+    [HttpPost("ĐĂNG KÝ")]
     public async Task<IActionResult> Create(CreateAccountDto dto)
     {
         var account = await _accountService.CreateAsync(dto);
@@ -99,7 +98,7 @@ public class AccountController : ControllerBase
     }
 
 
-    [HttpPost("ADMIN")]
+    [HttpPost("TẠO TÀI KHOẢN/ADMIN")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> AdminCreate([FromBody] AdminCreateAccountDto dto)
     {
@@ -133,7 +132,7 @@ public class AccountController : ControllerBase
         }
     }
 
-    [HttpPost("login")]
+    [HttpPost("ĐĂNG NHẬP")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         try
@@ -151,11 +150,9 @@ public class AccountController : ControllerBase
     }
 
 
-    [HttpPut("{id}")]
+    [HttpPut("{id}/CẬP NHẬT ACCOUNT/ADMIN")]
     [Authorize(Roles = "ADMIN")]
-    public async Task<IActionResult> Update(
-        int id,
-        [FromBody] UpdateAccountDto dto)
+    public async Task<IActionResult> Update(int id,[FromBody] UpdateAccountDto dto)
     {
         var accountIdValue = User.FindFirstValue(
             ClaimTypes.NameIdentifier);
@@ -197,7 +194,7 @@ public class AccountController : ControllerBase
 
     //Đổi Mật Khẩu
     [Authorize]
-    [HttpPut("change-password")]
+    [HttpPut("ĐỔI MẬT KHẨU")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
     {
         var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -242,7 +239,7 @@ public class AccountController : ControllerBase
         }
     }
 
-    [HttpPatch("{id}/status")]
+    [HttpPatch("{id}/ACTIVE OR LOCK ACOOUT FAST/ADMIN")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] ChangeAccountStatusDto dto)
     {
@@ -281,7 +278,7 @@ public class AccountController : ControllerBase
         }
     }
 
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id:int}/XÓA TÀI KHOẢN/ADMIN")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> Delete(int id)
     {

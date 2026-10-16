@@ -54,6 +54,11 @@ public class GlobalExceptionHandler
                 message = ex.Message;
                 break;
 
+            case GoiNapNotFoundException ex:
+                statusCode = StatusCodes.Status404NotFound;
+                message = ex.Message;
+                break;
+
             case GameNotFoundException ex:
                 statusCode = StatusCodes.Status404NotFound;
                 message = ex.Message;
@@ -65,6 +70,10 @@ public class GlobalExceptionHandler
                 break;
 
             case InvalidGoiNapException ex:
+                statusCode = StatusCodes.Status400BadRequest;
+                message = ex.Message;
+                break;
+            case InvalidOperationException ex:
                 statusCode = StatusCodes.Status400BadRequest;
                 message = ex.Message;
                 break;

@@ -24,7 +24,13 @@ public class AccountRepository : IAccountRepository
     }
 
     // 1. Lấy danh sách tài khoản
-    public async Task<PagedResultDto<Account>> GetAllAsync(int pageNumber,int pageSize,string? tenDangNhap,string? role,string? trangThai)
+
+    public async Task<PagedResultDto<Account>> GetAllAsync(
+        int pageNumber,
+        int pageSize,
+        int? accountId,
+        string? role,
+        string? trangThai)
     {
         var accounts = new List<Account>();
         int totalRecords = 0;
@@ -37,10 +43,8 @@ public class AccountRepository : IAccountRepository
         command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
         command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
 
-        command.Parameters.Add("@TenDangNhap", SqlDbType.NVarChar, 100).Value =
-            string.IsNullOrWhiteSpace(tenDangNhap)
-                ? DBNull.Value
-                : tenDangNhap.Trim();
+        command.Parameters.Add("@AccountId", SqlDbType.Int).Value =
+            (object?)accountId ?? DBNull.Value;
 
         command.Parameters.Add("@Role", SqlDbType.NVarChar, 20).Value =
             string.IsNullOrWhiteSpace(role)
@@ -84,7 +88,6 @@ public class AccountRepository : IAccountRepository
             TotalPages = totalPages
         };
     }
-
 
     //Xem thông tin cá nhân
     public async Task<MyAccountDto?> GetMeAsync(int accountId)
@@ -232,7 +235,7 @@ public class AccountRepository : IAccountRepository
 
             return Convert.ToInt32(result);
         }
-        catch(SqlException ex) when (ex.Number == 50011)
+        catch (SqlException ex) when (ex.Number == 50011)
         {
             throw new DuplicateException("Tên Đăng Nhập đã tồn tại");
         }
@@ -240,7 +243,7 @@ public class AccountRepository : IAccountRepository
 
 
     //Cập Nhật 
-    public async Task<Account?> UpdateAsync(int id, UpdateAccountDto dto,int nguoiCapNhatId)
+    public async Task<Account?> UpdateAsync(int id, UpdateAccountDto dto, int nguoiCapNhatId)
     {
         await using var connection = new SqlConnection(_connectionString);
 
@@ -336,7 +339,7 @@ public class AccountRepository : IAccountRepository
     }
 
     // 6. Đăng ký Account và User trong cùng Stored Procedure
-    public async Task<Account> RegisterAsync(Account account,User user)
+    public async Task<Account> RegisterAsync(Account account, User user)
     {
         await using var connection =
             new SqlConnection(_connectionString);

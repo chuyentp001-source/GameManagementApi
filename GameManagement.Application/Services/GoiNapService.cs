@@ -30,28 +30,62 @@ namespace GameManagement.Application.Services
             _currentUserService = currentUserService;
         }
 
-        /// <summary>
         /// Lấy danh sách tất cả các gói nạp trong hệ thống.
-        /// </summary>
-        public async Task<List<GoiNapDto>> GetAllAsync()
+        public async Task<PagedResultDto<GoiNapDto>> GetAllAsync(
+            int pageNumber,
+            int pageSize,
+            int? gameId,
+            string? tenGoiNap,
+            GoiNapStatus? trangThai)
         {
-            // 1. Gọi Repository lấy tất cả danh sách GoiNap từ Database
-            var goiNaps = await _goiNapRepository.GetAllAsync();
+            if (pageNumber < 1)
+                throw new ArgumentException(
+                    "Số trang phải lớn hơn hoặc bằng 1.");
 
-            // 2. Chuyển đổi (Map) danh sách Entity GoiNap sang GoiNapDto để trả về cho client
-            return goiNaps.Select(x => new GoiNapDto
+            if (pageSize < 1 || pageSize > 100)
+                throw new ArgumentException(
+                    "Số gói nạp mỗi trang phải từ 1 đến 100.");
+
+            if (gameId.HasValue && gameId.Value < 1)
+                throw new ArgumentException(
+                    "GameId phải lớn hơn hoặc bằng 1.");
+
+            var goiNapPage = await _goiNapRepository.GetAllAsync(
+                pageNumber,
+                pageSize,
+                gameId,
+                tenGoiNap,
+                trangThai?.ToString());
+
+            var items = new List<GoiNapDto>();
+
+            foreach (var x in goiNapPage.Items)
             {
-                GoiNapId = x.GoiNapId,
-                GameId = x.GameId,
-                TenGoiNap = x.TenGoiNap,
-                GiaGoc = x.GiaGoc,
-                TrangThai = x.TrangThai,
-                NguoiTaoID = x.NguoiTaoId,
-                NguoiCapNhatID = x.NguoiCapNhatId,
-                NgayTao = x.NgayTao,
-                NgayCapNhat = x.NgayCapNhat
-            }).ToList();
+                items.Add(new GoiNapDto
+                {
+                    GoiNapId = x.GoiNapId,
+                    GameId = x.GameId,
+                    TenGoiNap = x.TenGoiNap,
+                    GiaGoc = x.GiaGoc,
+                    TrangThai = x.TrangThai,
+                    NguoiTaoID = x.NguoiTaoId,
+                    NguoiCapNhatID = x.NguoiCapNhatId,
+                    NgayTao = x.NgayTao,
+                    NgayCapNhat = x.NgayCapNhat
+                });
+            }
+
+            return new PagedResultDto<GoiNapDto>
+            {
+                Items = items,
+                PageNumber = goiNapPage.PageNumber,
+                PageSize = goiNapPage.PageSize,
+                TotalRecords = goiNapPage.TotalRecords,
+                TotalPages = goiNapPage.TotalPages
+            };
         }
+
+
 
         /// <summary>
         /// Lấy thông tin chi tiết một gói nạp theo Id.
@@ -99,13 +133,21 @@ namespace GameManagement.Application.Services
             if (dto.GiaGoc < 1000)
                 throw new InvalidGoiNapException("Giá gốc phải từ 1,000 VNĐ trở lên");
 
+            var isDuplicate = await _goiNapRepository.IsDuplicateNameAsync(dto.GameId,dto.TenGoiNap.Trim());
+
+            if (isDuplicate)
+            {
+                throw new DuplicateException(
+                    "Tên gói nạp đã tồn tại trong Game này.");
+            }
+
             // 4. Khởi tạo đối tượng Entity GoiNap và ánh xạ dữ liệu từ DTO
             var goiNap = new GoiNap
             {
                 GameId = dto.GameId,
                 TenGoiNap = dto.TenGoiNap,
                 GiaGoc = dto.GiaGoc,
-                TrangThai = "HOAT_DONG", // Gói nạp mới tạo mặc định ở trạng thái HOAT_DONG
+                TrangThai = GoiNapStatus.HOAT_DONG, // Gói nạp mới tạo mặc định ở trạng thái HOAT_DONG
                 NguoiTaoId = _currentUserService.AccountId, // Lấy ID tài khoản Admin đang thực hiện từ JWT
                 NgayTao = DateTime.UtcNow                  // Ghi nhận thời gian tạo theo giờ chuẩn UTC
             };
@@ -144,11 +186,19 @@ namespace GameManagement.Application.Services
             if (dto.GiaGoc < 1000)
                 throw new InvalidGoiNapException("Giá gốc phải từ 1,000 VNĐ trở lên");
 
-            // 4. Kiểm tra giá trị trạng thái hợp lệ (chỉ cho phép HOAT_DONG hoặc NGUNG_HOAT_DONG)
-            if (dto.TrangThai != "HOAT_DONG" &&
-                 dto.TrangThai != "NGUNG_HOAT_DONG")
+            var isDuplicate = await _goiNapRepository.IsDuplicateNameAsync(goiNap.GameId,dto.TenGoiNap.Trim(),id);
+
+            if (isDuplicate)
             {
-                throw new InvalidGoiNapException("Trạng thái gói nạp không hợp lệ");
+                throw new DuplicateException(
+                    "Tên gói nạp đã tồn tại trong Game này.");
+            }
+
+            // 4. Kiểm tra giá trị trạng thái hợp lệ (chỉ cho phép HOAT_DONG hoặc NGUNG_HOAT_DONG)
+            if (!Enum.IsDefined(typeof(GoiNapStatus), dto.TrangThai))
+            {
+                throw new InvalidGoiNapException(
+                    "Trạng thái gói nạp không hợp lệ");
             }
 
             // 5. Cập nhật các thông tin mới từ DTO vào Entity
@@ -177,5 +227,62 @@ namespace GameManagement.Application.Services
                 NgayCapNhat = updateGoiNap.NgayCapNhat
             };
         }
+
+        public async Task<GoiNapDto?> UpdateStatusAsync(
+            int id,
+            UpdateGoiNapStatusDto dto)
+        {
+
+            if (!Enum.TryParse<GoiNapStatus>(
+                    dto.TrangThai,
+                    ignoreCase: false,
+                    out var trangThai)
+                || !Enum.IsDefined(typeof(GoiNapStatus), trangThai))
+            {
+                throw new InvalidGoiNapException(
+                    "Trạng thái gói nạp không hợp lệ. Chỉ chấp nhận HOAT_DONG hoặc NGUNG_HOAT_DONG.");
+            }
+
+            var goiNap = await _goiNapRepository.GetByIdAsync(id);
+
+            if (goiNap == null)
+                return null;
+
+            goiNap.TrangThai = trangThai;
+            goiNap.NguoiCapNhatId = _currentUserService.AccountId;
+            goiNap.NgayCapNhat = DateTime.UtcNow;
+
+            var updatedGoiNap = await _goiNapRepository.UpdateAsync(goiNap);
+
+            return new GoiNapDto
+            {
+                GoiNapId = updatedGoiNap.GoiNapId,
+                GameId = updatedGoiNap.GameId,
+                TenGoiNap = updatedGoiNap.TenGoiNap,
+                GiaGoc = updatedGoiNap.GiaGoc,
+                TrangThai = updatedGoiNap.TrangThai,
+                NguoiTaoID = updatedGoiNap.NguoiTaoId,
+                NguoiCapNhatID = updatedGoiNap.NguoiCapNhatId,
+                NgayTao = updatedGoiNap.NgayTao,
+                NgayCapNhat = updatedGoiNap.NgayCapNhat
+            };
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            if (id <= 0)
+                throw new ArgumentException(
+                    "ID gói nạp phải lớn hơn 0.");
+
+            var goiNap = await _goiNapRepository.GetByIdAsync(id);
+
+            if (goiNap == null)
+                return false;
+
+            return await _goiNapRepository.DeleteAsync(
+                id,
+                _currentUserService.AccountId);
+        }
+
     }
 }

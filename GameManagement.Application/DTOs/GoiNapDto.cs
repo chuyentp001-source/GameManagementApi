@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using GameManagement.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace GameManagement.Application.DTOs
 {
@@ -8,7 +9,7 @@ namespace GameManagement.Application.DTOs
         public int GameId { get; set; }
         public string TenGoiNap { get; set; } = null!;
         public decimal GiaGoc { get; set; }
-        public string TrangThai { get; set; } = null!;
+        public GoiNapStatus TrangThai { get; set; } 
         public int? NguoiTaoID { get; set; }
         public int? NguoiCapNhatID { get; set; }
         public DateTime NgayTao { get; set; }
@@ -38,6 +39,14 @@ namespace GameManagement.Application.DTOs
         public decimal GiaGoc { get; set; }
 
         [Required(ErrorMessage = "Trạng thái không được để trống")]
-        public string TrangThai { get; set; } = null!;
+        public GoiNapStatus TrangThai { get; set; }
+    }
+
+    public class UpdateGoiNapStatusDto
+    {
+        [Required(ErrorMessage = "Trạng thái không được để trống")]
+        [RegularExpression("^(HOAT_DONG|NGUNG_HOAT_DONG)$",
+            ErrorMessage = "Trạng thái gói nạp không hợp lệ. Chỉ chấp nhận HOAT_DONG hoặc NGUNG_HOAT_DONG.")]
+        public string TrangThai { get; set; } = string.Empty;
     }
 }

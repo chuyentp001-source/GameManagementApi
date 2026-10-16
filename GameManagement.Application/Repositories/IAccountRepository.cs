@@ -6,7 +6,7 @@ namespace GameManagement.Application.Repositories;
 
 public interface IAccountRepository
 {
-    Task<PagedResultDto<Account>> GetAllAsync(int pageNumber, int pageSize, string? tenDangNhap, string? role, string? trangThai);
+    Task<PagedResultDto<Account>> GetAllAsync(int pageNumber, int pageSize, int? accountId, string? role, string? trangThai);
     Task<MyAccountDto?> GetMeAsync(int accountId);
     Task<Account?> GetByIdAsync(int id);
     Task<Account> CreateAsync(Account account);

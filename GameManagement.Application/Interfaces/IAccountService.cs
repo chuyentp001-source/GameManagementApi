@@ -1,10 +1,11 @@
 ﻿using GameManagement.Application.DTOs;
+using GameManagement.Domain.Enums;
 
 namespace GameManagement.Application.Interfaces;
 
 public interface IAccountService
 {
-    Task<PagedResultDto<AccountDto>> GetAllAsync(int pageNumber,int pageSize,string? tenDangNhap,string? role,string? trangThai);
+    Task<PagedResultDto<AccountDto>> GetAllAsync(int pageNumber, int pageSize, int? accountId, AccountRole? role, AccountStatus? trangThai);
     Task<MyAccountDto?> GetMeAsync(int accountId);
     Task<AccountDto?> GetByIdAsync(int id);
     Task<AccountDto> CreateAsync(CreateAccountDto dto);

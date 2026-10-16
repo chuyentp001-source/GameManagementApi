@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GameManagement.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace GameManagement.Domain.Entities;
@@ -13,7 +14,8 @@ public partial class GoiNap
 
     public decimal GiaGoc { get; set; }
 
-    public string TrangThai { get; set; } = null!;
+    public GoiNapStatus TrangThai { get; set; } = GoiNapStatus.HOAT_DONG;
+    public bool DaXoa { get; set; } = false;
 
     public int? NguoiTaoId { get; set; }
 
