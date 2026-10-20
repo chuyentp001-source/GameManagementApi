@@ -1,30 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using GameManagement.Domain.Enums;
 namespace GameManagement.Domain.Entities;
 
 public partial class DonHang
 {
     public long DonHangId { get; set; }
+    public string LoaiGiaoDich { get; set; } = "MUA_GOI";
 
     public int AccountId { get; set; }
 
-    public int GoiNapId { get; set; }
+    public int? GoiNapId { get; set; }
 
     public int? ChietKhauId { get; set; }
 
-    public string TaiKhoanGame { get; set; } = null!;
+    public string? TaiKhoanGame { get; set; } = null!;
 
     public string? Server { get; set; }
 
     public decimal TongTienThanhToan { get; set; }
 
-    public string PhuongThucThanhToan { get; set; } = null!;
+    public PhuongThucThanhToan PhuongThucThanhToan { get; set; } = PhuongThucThanhToan.CHUYEN_KHOAN;
 
     public string? MaGiaoDichBank { get; set; }
 
-    public string TrangThaiThanhToan { get; set; } = null!;
+    public TrangThaiThanhToan TrangThaiThanhToan { get; set; } = TrangThaiThanhToan.CHO_THANH_TOAN;
 
-    public string TrangThaiDonHang { get; set; } = null!;
+    public TrangThaiDonHang TrangThaiDonHang { get; set; } = TrangThaiDonHang.CHO_XU_LY;
 
     public int? NguoiTaoId { get; set; }
 

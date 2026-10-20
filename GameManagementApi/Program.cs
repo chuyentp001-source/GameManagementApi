@@ -189,6 +189,10 @@ builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddScoped<IGoiNapService, GoiNapService>();
 builder.Services.AddScoped<IGoiNapRepository, GoiNapRepository>();
 
+//Module Dơn Hàng
+builder.Services.AddScoped<IDonHangRepository, DonHangRepository>();
+builder.Services.AddScoped<IDonHangService, DonHangService>();
+
 // User helper
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 

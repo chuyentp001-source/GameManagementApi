@@ -44,11 +44,12 @@ public class GlobalExceptionHandler
         HttpContext context,
         Exception exception)
     {
-        int statusCode;
-        string message;
+        int statusCode = StatusCodes.Status500InternalServerError;
+        string message = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";
 
         switch (exception)
         {
+
             case DuplicateException ex:
                 statusCode = StatusCodes.Status409Conflict;
                 message = ex.Message;
@@ -73,11 +74,26 @@ public class GlobalExceptionHandler
                 statusCode = StatusCodes.Status400BadRequest;
                 message = ex.Message;
                 break;
+            case ArgumentException ex:
+                statusCode = StatusCodes.Status400BadRequest;
+                message = ex.Message;
+                break;
             case InvalidOperationException ex:
                 statusCode = StatusCodes.Status400BadRequest;
                 message = ex.Message;
                 break;
-
+            case ThanhToanException ex:
+                statusCode = ex.StatusCode;
+                message = ex.Message;
+                break;
+            case DonHangException ex:
+                statusCode = ex.StatusCode;
+                message = ex.Message;
+                break;
+            case TaoDonHangException ex:
+                statusCode = ex.StatusCode;
+                message = ex.Message;
+                break;
             default:
                 statusCode = StatusCodes.Status500InternalServerError;
                 message = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";
