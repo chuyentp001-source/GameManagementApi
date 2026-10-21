@@ -2,6 +2,7 @@ using GameManagement.Application.ExceptionHandlers;
 using GameManagement.Application.Interfaces;
 using GameManagement.Application.Repositories;
 using GameManagement.Application.Services;
+using GameManagement.Infrastructure.BackgroundServices;
 using GameManagement.Infrastructure.Configurations;
 using GameManagement.Infrastructure.Data;
 using GameManagement.Infrastructure.Repositories;
@@ -136,6 +137,7 @@ builder.Services.AddEndpointsApiExplorer();
 // Đăng ký hiển thị nút nhập token trên Swagger UI
 builder.Services.AddSwaggerGen(options =>
 {
+    options.EnableAnnotations();
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -195,6 +197,8 @@ builder.Services.AddScoped<IDonHangService, DonHangService>();
 
 // User helper
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+builder.Services.AddHostedService<DonHangExpirationService>();
 
 // =========================================================================
 // 5. CẤU HÌNH HTTP REQUEST PIPELINE (Luồng xử lý Request)

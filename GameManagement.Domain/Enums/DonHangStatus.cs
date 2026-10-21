@@ -25,3 +25,8 @@ public enum TrangThaiDonHang
     CHO_XU_LY,
     NAP_GAME_THAT_BAI
 }
+public enum LoaiGiaoDich
+{
+    MUA_GOI,
+    NAP_TIEN
+}

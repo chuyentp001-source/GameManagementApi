@@ -18,7 +18,7 @@ namespace GameManagementApi.Controllers
             _goiNapService = goiNapService;
         }
 
-        [HttpGet]
+        [HttpGet("XEM DANH SÁCH GÓI NẠP")]
         [Authorize]
         public async Task<IActionResult> GetAll(
             [FromQuery] int pageNumber = 1,
@@ -44,7 +44,7 @@ namespace GameManagementApi.Controllers
             }
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("CHI TIẾT GÓI NẠP/{id:int}")]
         [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
@@ -59,7 +59,7 @@ namespace GameManagementApi.Controllers
             return Ok(goiNap);
         }
 
-        [HttpPost]
+        [HttpPost("TẠO GÓI NẠP MỚI/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Create([FromBody] CreateGoiNapDto dto)
         {
@@ -72,7 +72,7 @@ namespace GameManagementApi.Controllers
             );
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("CẬP NHẬT GÓI NẠP/{id:int}/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Update(
             int id,
@@ -89,7 +89,7 @@ namespace GameManagementApi.Controllers
             return Ok(goiNap);
         }
 
-        [HttpPatch("{id:int}/status")]
+        [HttpPatch("CẬP NHẬT TRẠNG THÁI GÓI NẠP/{id:int}/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> UpdateStatus(
             int id,
@@ -106,7 +106,7 @@ namespace GameManagementApi.Controllers
             return Ok(goiNap);
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("XÓA GÓI NẠP/{id:int}/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -125,6 +125,5 @@ namespace GameManagementApi.Controllers
                 message = "Xóa gói nạp thành công."
             });
         }
-
     }
 }

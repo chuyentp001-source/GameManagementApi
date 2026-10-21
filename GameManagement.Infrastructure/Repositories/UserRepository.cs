@@ -1,10 +1,12 @@
 ﻿
 using GameManagement.Application.DTOs;
+using GameManagement.Application.Exceptions;
 using GameManagement.Application.Repositories;
 using GameManagement.Domain.Entities;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
+using System.Runtime.InteropServices;
 
 namespace GameManagement.Infrastructure.Repositories;
 
@@ -44,6 +46,15 @@ public class UserRepository : IUserRepository
 
         command.Parameters.Add("@DiaChi", SqlDbType.NVarChar, 300)
             .Value = (object?)dto.DiaChi?.Trim() ?? DBNull.Value;
+
+        command.Parameters.Add("@TenNganHang", SqlDbType.NVarChar, 100)
+            .Value = (object?)dto.TenNganHang?.Trim() ?? DBNull.Value;
+
+        command.Parameters.Add("@SoTaiKhoanNganHang", SqlDbType.VarChar, 50)
+            .Value = (object?)dto.SoTaiKhoanNganHang?.Trim() ?? DBNull.Value;
+
+        command.Parameters.Add("@TenChuTaiKhoanNganHang", SqlDbType.NVarChar, 150)
+            .Value = (object?)dto.TenChuTaiKhoanNganHang?.Trim() ?? DBNull.Value;
         try
         {
             await connection.OpenAsync();
@@ -67,10 +78,34 @@ public class UserRepository : IUserRepository
                 DiaChi = reader.IsDBNull(reader.GetOrdinal("DiaChi"))
                     ? null
                     : reader.GetString(reader.GetOrdinal("DiaChi")),
+                TenNganHang = reader.IsDBNull(reader.GetOrdinal("TenNganHang"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("TenNganHang")),
+                SoTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("SoTaiKhoanNganHang"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("SoTaiKhoanNganHang")),
+                TenChuTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("TenChuTaiKhoanNganHang"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("TenChuTaiKhoanNganHang")),
                 NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
                 NgayCapNhat = reader.GetDateTime(
                     reader.GetOrdinal("NgayCapNhat"))
             };
+        }
+        catch (SqlException ex) when (
+            ex.Number == 50021 ||
+            ex.Number == 50022 ||
+            ex.Number == 50023)
+        {
+            var statusCode = ex.Number switch
+            {
+                50021 => 404,
+                50022 => 404,
+                50023 => 409,
+                _ => 400
+            };
+
+            throw new UserException(ex.Message, statusCode);
         }
         catch (SqlException ex)
         {
@@ -79,7 +114,6 @@ public class UserRepository : IUserRepository
             throw;
         }
     }
-
 
     public async Task<User?> GetProfileAsync(int accountId)
     {
@@ -118,6 +152,17 @@ public class UserRepository : IUserRepository
             DiaChi = reader.IsDBNull(reader.GetOrdinal("DiaChi"))
                 ? null
                 : reader.GetString(reader.GetOrdinal("DiaChi")),
+            TenNganHang = reader.IsDBNull(reader.GetOrdinal("TenNganHang"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("TenNganHang")),
+
+            SoTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("SoTaiKhoanNganHang"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("SoTaiKhoanNganHang")),
+
+            TenChuTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("TenChuTaiKhoanNganHang"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("TenChuTaiKhoanNganHang")),
 
             NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
             NgayCapNhat = reader.GetDateTime(
@@ -188,6 +233,17 @@ public class UserRepository : IUserRepository
                     ? null
                     : reader.GetString(reader.GetOrdinal("DiaChi")),
 
+                TenNganHang = reader.IsDBNull(reader.GetOrdinal("TenNganHang"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("TenNganHang")),
+
+                SoTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("SoTaiKhoanNganHang"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("SoTaiKhoanNganHang")),
+
+                TenChuTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("TenChuTaiKhoanNganHang"))
+                    ? null
+                    : reader.GetString(reader.GetOrdinal("TenChuTaiKhoanNganHang")),
                 NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
                 NgayCapNhat = reader.GetDateTime(
                     reader.GetOrdinal("NgayCapNhat"))
@@ -255,6 +311,18 @@ public class UserRepository : IUserRepository
             DiaChi = reader.IsDBNull(reader.GetOrdinal("DiaChi"))
                 ? null
                 : reader.GetString(reader.GetOrdinal("DiaChi")),
+
+            TenNganHang = reader.IsDBNull(reader.GetOrdinal("TenNganHang"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("TenNganHang")),
+
+            SoTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("SoTaiKhoanNganHang"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("SoTaiKhoanNganHang")),
+
+            TenChuTaiKhoanNganHang = reader.IsDBNull(reader.GetOrdinal("TenChuTaiKhoanNganHang"))
+                ? null
+                : reader.GetString(reader.GetOrdinal("TenChuTaiKhoanNganHang")),
 
             NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
             NgayCapNhat = reader.GetDateTime(

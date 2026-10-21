@@ -16,6 +16,12 @@ namespace GameManagement.Application.DTOs
 
         public string? DiaChi { get; set; }
 
+        public string? TenNganHang { get; set; }
+
+        public string? SoTaiKhoanNganHang { get; set; }
+
+        public string? TenChuTaiKhoanNganHang { get; set; }
+
         public DateTime NgayTao { get; set; }
 
         public DateTime NgayCapNhat { get; set; }
@@ -36,6 +42,11 @@ namespace GameManagement.Application.DTOs
 
         [StringLength(300, ErrorMessage = "Địa chỉ tối đa 300 ký tự.")]
         public string? DiaChi { get; set; }
+        public string? TenNganHang { get; set; }
+
+        public string? SoTaiKhoanNganHang { get; set; }
+
+        public string? TenChuTaiKhoanNganHang { get; set; }
     }
 }
 

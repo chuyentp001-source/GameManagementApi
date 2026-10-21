@@ -18,8 +18,7 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-
-    [HttpGet("UserAll")]
+    [HttpGet("XEM DANH SÁCH NGƯỜI DÙNG/ADMIN")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> GetAll(
         [FromQuery] int pageNumber = 1,
@@ -45,7 +44,7 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("CHI TIẾT HỒ SƠ/{id:int}/ADMIN")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -72,8 +71,43 @@ public class UserController : ControllerBase
         }
     }
 
+    [HttpGet("XEM HỒ SƠ CỦA TÔI")]
+    [Authorize(Roles = "USER,ADMIN")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var accountIdValue = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
 
-    [HttpPut("profile")]
+        if (!int.TryParse(accountIdValue, out int accountId))
+        {
+            return Unauthorized(new
+            {
+                message = "Token không chứa AccountID hợp lệ."
+            });
+        }
+
+        try
+        {
+            var profile = await _userService.GetProfileAsync(accountId);
+
+            if (profile == null)
+            {
+                return NotFound(new
+                {
+                    message = "Không tìm thấy hồ sơ người dùng."
+                });
+            }
+
+            return Ok(profile);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("CẬP NHẬT HỒ SƠ CỦA TÔI")]
+    [Authorize(Roles = "USER,ADMIN")]
     public async Task<IActionResult> UpdateProfile(
         [FromBody] UpdateUserProfileDto dto)
     {
@@ -113,41 +147,4 @@ public class UserController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
-
-
-    [HttpGet("profile")]
-    [Authorize(Roles = "USER,ADMIN")]
-    public async Task<IActionResult> GetProfile()
-    {
-        var accountIdValue = User.FindFirstValue(
-            ClaimTypes.NameIdentifier);
-
-        if (!int.TryParse(accountIdValue, out int accountId))
-        {
-            return Unauthorized(new
-            {
-                message = "Token không chứa AccountID hợp lệ."
-            });
-        }
-
-        try
-        {
-            var profile = await _userService.GetProfileAsync(accountId);
-
-            if (profile == null)
-            {
-                return NotFound(new
-                {
-                    message = "Không tìm thấy hồ sơ người dùng."
-                });
-            }
-
-            return Ok(profile);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-    }
-
 }

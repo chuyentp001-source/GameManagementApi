@@ -47,6 +47,9 @@ public class UserService : IUserService
                 Email = user.Email,
                 SoDienThoai = user.SoDienThoai,
                 DiaChi = user.DiaChi,
+                TenNganHang = user.TenNganHang,
+                SoTaiKhoanNganHang = user.SoTaiKhoanNganHang,
+                TenChuTaiKhoanNganHang = user.TenChuTaiKhoanNganHang,
                 NgayTao = user.NgayTao,
                 NgayCapNhat = user.NgayCapNhat
             });
@@ -80,6 +83,9 @@ public class UserService : IUserService
             Email = user.Email,
             SoDienThoai = user.SoDienThoai,
             DiaChi = user.DiaChi,
+            TenNganHang = user.TenNganHang,
+            SoTaiKhoanNganHang = user.SoTaiKhoanNganHang,
+            TenChuTaiKhoanNganHang = user.TenChuTaiKhoanNganHang,
             NgayTao = user.NgayTao,
             NgayCapNhat = user.NgayCapNhat
         };
@@ -94,6 +100,16 @@ public class UserService : IUserService
 
         if (string.IsNullOrWhiteSpace(dto.HoTen))
             throw new ArgumentException("Họ tên không được để trống.");
+        if (!string.IsNullOrWhiteSpace(dto.SoDienThoai))
+        {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                dto.SoDienThoai.Trim(),
+                @"^0\d{9}$"))
+            {
+                throw new ArgumentException(
+                    "Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0.");
+            }
+        }
 
         var user = await _userRepository.UpdateProfileAsync(
             accountId,
@@ -107,7 +123,11 @@ public class UserService : IUserService
             HoTen = user.HoTen,
             Email = user.Email,
             SoDienThoai = user.SoDienThoai,
-            DiaChi = user.DiaChi
+            DiaChi = user.DiaChi,
+
+            TenNganHang = user.TenNganHang,
+            SoTaiKhoanNganHang = user.SoTaiKhoanNganHang,
+            TenChuTaiKhoanNganHang = user.TenChuTaiKhoanNganHang
         };
     }
 
@@ -126,7 +146,10 @@ public class UserService : IUserService
             HoTen = user.HoTen,
             Email = user.Email,
             SoDienThoai = user.SoDienThoai,
-            DiaChi = user.DiaChi
+            DiaChi = user.DiaChi,
+            TenNganHang = user.TenNganHang,
+            SoTaiKhoanNganHang = user.SoTaiKhoanNganHang,
+            TenChuTaiKhoanNganHang = user.TenChuTaiKhoanNganHang
         };
     }
 

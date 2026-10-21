@@ -4,6 +4,7 @@ namespace GameManagement.Application.Interfaces;
 
 public interface IDonHangService
 {
+    Task<PagedResultDto<DonHangDto>> GetAllPagedAsync(int pageNumber, int pageSize, string? loaiGiaoDich, string? trangThaiDonHang, string? trangThaiThanhToan,int? accountId, string? tuKhoa);
     Task<DonHangDto> CreateAsync(int accountId,CreateDonHangDto dto);
     Task<DonHangDto?> GetByIdAsync(long id);
     Task<List<DonHangDto>> GetByAccountIdAsync(int accountId);
@@ -12,4 +13,6 @@ public interface IDonHangService
     Task<DonHangDto?> HoanTienAsync(long donHangId,int nguoiCapNhatId);
     Task<YeuCauNapTienDto?> TaoYeuCauNapTienAsync(int accountId,CreateYeuCauNapTienDto dto);
     Task<DonHangDto?> XacNhanNapTienAsync(long donHangId,int nguoiXacNhanId);
+    Task<DonHangDto?> XacNhanThanhToanChuyenKhoanAsync(long donHangId,int nguoiXacNhanId);
+    Task<DonHangDto?> HoanTienChuyenKhoanAsync(long donHangId, int nguoiCapNhatId);
 }

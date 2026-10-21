@@ -11,5 +11,5 @@ public class PagedResultDto<T>
 
     public int TotalRecords { get; set; }
 
-    public int TotalPages { get; set; }
+    public long TotalPages { get; set; }
 }

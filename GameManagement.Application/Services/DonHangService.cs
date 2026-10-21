@@ -21,6 +21,46 @@ public class DonHangService : IDonHangService
         _goiNapRepository = goiNapRepository;
     }
 
+    public async Task<PagedResultDto<DonHangDto>> GetAllPagedAsync(
+        int pageNumber,
+        int pageSize,
+        string? loaiGiaoDich,
+        string? trangThaiDonHang,
+        string? trangThaiThanhToan,
+        int? accountId,
+        string? tuKhoa)
+    {
+        if (pageNumber < 1)
+            throw new ArgumentException("Số trang phải lớn hơn hoặc bằng 1.");
+
+        if (pageSize < 1 || pageSize > 100)
+            throw new ArgumentException("Số bản ghi mỗi trang phải từ 1 đến 100.");
+
+        var donHangPaged = await _donHangRepository.GetAllPagedAsync(
+            pageNumber,
+            pageSize,
+            loaiGiaoDich,
+            trangThaiDonHang,
+            trangThaiThanhToan,
+            accountId,
+            tuKhoa);
+
+        var result = new PagedResultDto<DonHangDto>
+        {
+            PageNumber = donHangPaged.PageNumber,
+            PageSize = donHangPaged.PageSize,
+            TotalRecords = donHangPaged.TotalRecords,
+            TotalPages = donHangPaged.TotalPages
+        };
+
+        foreach (var donHang in donHangPaged.Items)
+        {
+            result.Items.Add(MapToDto(donHang));
+        }
+
+        return result;
+    }
+
     public async Task<DonHangDto> CreateAsync(
         int accountId,
         CreateDonHangDto dto)
@@ -253,6 +293,42 @@ public class DonHangService : IDonHangService
         {
             return null;
         }
+
+        return MapToDto(donHang);
+    }
+
+    public async Task<DonHangDto?> XacNhanThanhToanChuyenKhoanAsync(
+        long donHangId,
+        int nguoiXacNhanId)
+    {
+        var donHang = await _donHangRepository
+            .XacNhanThanhToanChuyenKhoanAsync(
+                donHangId,
+                nguoiXacNhanId);
+
+        if (donHang == null)
+        {
+            return null;
+        }
+
+        return MapToDto(donHang);
+    }
+    public async Task<DonHangDto?> HoanTienChuyenKhoanAsync(
+    long donHangId,
+    int nguoiCapNhatId)
+    {
+        if (donHangId <= 0)
+            throw new ArgumentException("DonHangId không hợp lệ.");
+
+        if (nguoiCapNhatId <= 0)
+            throw new ArgumentException("AccountId người cập nhật không hợp lệ.");
+
+        var donHang = await _donHangRepository.HoanTienChuyenKhoanAsync(
+            donHangId,
+            nguoiCapNhatId);
+
+        if (donHang == null)
+            return null;
 
         return MapToDto(donHang);
     }

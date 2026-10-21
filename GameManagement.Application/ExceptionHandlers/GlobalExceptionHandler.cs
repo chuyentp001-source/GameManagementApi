@@ -94,6 +94,10 @@ public class GlobalExceptionHandler
                 statusCode = ex.StatusCode;
                 message = ex.Message;
                 break;
+            case UserException ex:
+                statusCode = ex.StatusCode;
+                message = ex.Message;
+                break;
             default:
                 statusCode = StatusCodes.Status500InternalServerError;
                 message = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";

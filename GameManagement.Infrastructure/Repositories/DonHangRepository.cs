@@ -1,9 +1,11 @@
-﻿using GameManagement.Application.Exceptions;
+﻿using GameManagement.Application.DTOs;
+using GameManagement.Application.Exceptions;
 using GameManagement.Application.Repositories;
 using GameManagement.Domain.Entities;
 using GameManagement.Domain.Enums;
 using GameManagement.Infrastructure.Data;
 using Microsoft.Data.SqlClient;
+using Microsoft.Identity.Client;
 using System.Data;
 
 namespace GameManagement.Infrastructure.Repositories;
@@ -15,6 +17,77 @@ public class DonHangRepository : IDonHangRepository
     public DonHangRepository(SqlConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
+    }
+
+    public async Task<PagedResultDto<DonHang>> GetAllPagedAsync(
+        int pageNumber,
+        int pageSize,
+        string? loaiGiaoDich,
+        string? trangThaiDonHang,
+        string? trangThaiThanhToan,
+        int? accountId,
+        string? tuKhoa)
+    {
+        var result = new PagedResultDto<DonHang>
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand(
+            "dbo.sp_DonHang_GetAllPaged",
+            connection);
+
+        command.CommandType = CommandType.StoredProcedure;
+
+        command.Parameters.Add("@PageNumber", SqlDbType.Int)
+            .Value = pageNumber;
+
+        command.Parameters.Add("@PageSize", SqlDbType.Int)
+            .Value = pageSize;
+
+        command.Parameters.Add("@LoaiGiaoDich", SqlDbType.VarChar, 30)
+            .Value = (object?)loaiGiaoDich ?? DBNull.Value;
+
+        command.Parameters.Add("@TrangThaiDonHang", SqlDbType.VarChar, 30)
+            .Value = (object?)trangThaiDonHang ?? DBNull.Value;
+
+        command.Parameters.Add("@TrangThaiThanhToan", SqlDbType.VarChar, 30)
+            .Value = (object?)trangThaiThanhToan ?? DBNull.Value;
+
+        command.Parameters.Add("@AccountId", SqlDbType.Int)
+            .Value = (object?)accountId ?? DBNull.Value;
+
+        command.Parameters.Add("@TuKhoa", SqlDbType.NVarChar, 100)
+            .Value = (object?)tuKhoa ?? DBNull.Value;
+
+        using var reader = await command.ExecuteReaderAsync();
+
+        // Kết quả thứ nhất: tổng số bản ghi
+        if (await reader.ReadAsync())
+        {
+            result.TotalRecords = Convert.ToInt32(
+                reader["TongSoBanGhi"]);
+        }
+
+        // Kết quả thứ hai: danh sách đơn hàng
+        if (await reader.NextResultAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                result.Items.Add(MapDonHang(reader));
+            }
+        }
+
+        result.TotalPages = result.TotalRecords == 0
+            ? 0
+            : (int)Math.Ceiling(
+                (double)result.TotalRecords / result.PageSize);
+
+        return result;
     }
 
     public async Task<DonHang> CreateAsync(DonHang donHang)
@@ -93,6 +166,11 @@ public class DonHangRepository : IDonHangRepository
                 case 50035:
                     statusCode = 400;
                     message = "Giá gói nạp không hợp lệ.";
+                    break;
+
+                case 50036:
+                    statusCode = 400;
+                    message = "Vui lòng cập nhật đầy đủ thông tin tài khoản ngân hàng trước khi tạo đơn hàng.";
                     break;
 
                 default:
@@ -324,7 +402,7 @@ public class DonHangRepository : IDonHangRepository
             return MapDonHang(reader);
         }
         catch (SqlException ex) when (
-            ex.Number >= 50400 && ex.Number <= 50404)
+            ex.Number >= 50400 && ex.Number <= 50405)
         {
             var statusCode = ex.Number switch
             {
@@ -385,6 +463,93 @@ public class DonHangRepository : IDonHangRepository
             throw new DonHangException(
                 ex.Message,
                 statusCode);
+        }
+    }
+
+    public async Task<DonHang?> XacNhanThanhToanChuyenKhoanAsync(
+        long donHangId,
+        int nguoiXacNhanId)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+
+            using var command = new SqlCommand(
+                "dbo.sp_DonHang_XacNhanThanhToanChuyenKhoan",
+                connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@DonHangId", SqlDbType.BigInt)
+                .Value = donHangId;
+
+            command.Parameters.Add("@NguoiXacNhanId", SqlDbType.Int)
+                .Value = nguoiXacNhanId;
+
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                return null;
+            }
+
+            return MapDonHang(reader);
+        }
+        catch (SqlException ex) when (
+            ex.Number >= 50600 && ex.Number <= 50606)
+        {
+            var statusCode = ex.Number switch
+            {
+                50600 => 404,
+                50605 => 403,
+                _ => 400
+            };
+
+            throw new DonHangException(ex.Message, statusCode);
+        }
+    }
+    public async Task<DonHang?> HoanTienChuyenKhoanAsync(
+        long donHangId,
+        int nguoiCapNhatId)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+
+            using var command = new SqlCommand(
+                "dbo.sp_DonHang_HoanTienChuyenKhoan",
+                connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@DonHangId", SqlDbType.BigInt)
+                .Value = donHangId;
+
+            command.Parameters.Add("@NguoiCapNhatId", SqlDbType.Int)
+                .Value = nguoiCapNhatId;
+
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+                return null;
+
+            return MapDonHang(reader);
+        }
+        catch (SqlException ex) when (
+            ex.Number >= 50700 && ex.Number <= 50707)
+        {
+            var statusCode = ex.Number switch
+            {
+                50700 => 404, // Đơn hàng không tồn tại
+                50706 => 403, // Người thực hiện không phải ADMIN hợp lệ
+                _ => 400
+            };
+
+            throw new DonHangException(ex.Message, statusCode);
         }
     }
 

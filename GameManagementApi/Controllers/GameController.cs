@@ -19,7 +19,7 @@ namespace GameManagementApi.Controllers
             _gameService = gameService;
         }
 
-        [HttpGet]
+        [HttpGet("XEM DANH SÁCH GAME")]
         [Authorize]
         public async Task<IActionResult> GetAll(
             [FromQuery] string? keyword,
@@ -33,19 +33,22 @@ namespace GameManagementApi.Controllers
             return Ok(games);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("CHI TIẾT GAME/{id:int}")]
         [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
             var game = await _gameService.GetByIdAsync(id);
 
             if (game == null)
-                return NotFound();
+                return NotFound(new
+                {
+                    message = "Không tìm thấy Game."
+                });
 
             return Ok(game);
         }
 
-        [HttpPost]
+        [HttpPost("TẠO GAME MỚI/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Create(CreateGameDto dto)
         {
@@ -57,19 +60,22 @@ namespace GameManagementApi.Controllers
                 game);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("CẬP NHẬT GAME/{id:int}/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateGameDto dto)
         {
             var game = await _gameService.UpdateAsync(id, dto);
 
             if (game == null)
-                return NotFound();
+                return NotFound(new
+                {
+                    message = "Không tìm thấy Game để cập nhật."
+                });
 
             return Ok(game);
         }
 
-        [HttpPatch("{id:int}/status")]
+        [HttpPatch("CẬP NHẬT TRẠNG THÁI GAME/{id:int}/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> UpdateStatus(
             int id,
@@ -88,7 +94,7 @@ namespace GameManagementApi.Controllers
             return Ok(game);
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("XÓA GAME/{id:int}/ADMIN")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -107,6 +113,5 @@ namespace GameManagementApi.Controllers
                 message = "Xóa Game thành công."
             });
         }
-
     }
 }
