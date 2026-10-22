@@ -143,45 +143,37 @@ public class DonHangService : IDonHangService
         return MapToDto(donHang);
     }
 
-    public async Task<List<DonHangDto>> GetByAccountIdAsync(
-        int accountId)
+    public async Task<PagedResultDto<DonHangDto>> GetByAccountIdAsync(
+     int accountId,
+     int pageNumber,
+     int pageSize)
     {
         if (accountId <= 0)
-            throw new ArgumentException(
-                "Mã tài khoản không hợp lệ.");
+            throw new ArgumentException("Mã tài khoản không hợp lệ.");
 
-        var donHangs =
-            await _donHangRepository.GetByAccountIdAsync(accountId);
+        var donHangs = await _donHangRepository.GetAllPagedAsync(
+            pageNumber,
+            pageSize,
+            null,
+            null,
+            null,
+            accountId,
+            null);
 
-        var result = new List<DonHangDto>();
-
-        foreach (var donHang in donHangs)
+        var result = new PagedResultDto<DonHangDto>
         {
-            result.Add(MapToDto(donHang));
+            PageNumber = donHangs.PageNumber,
+            PageSize = donHangs.PageSize,
+            TotalRecords = donHangs.TotalRecords,
+            TotalPages = donHangs.TotalPages
+        };
+
+        foreach (var donHang in donHangs.Items)
+        {
+            result.Items.Add(MapToDto(donHang));
         }
 
         return result;
-    }
-
-    public async Task<DonHangDto?> ThanhToanBangViAsync(
-        long donHangId,
-        int accountId)
-    {
-        if (donHangId <= 0)
-            throw new ArgumentException(
-                "Mã đơn hàng phải lớn hơn 0.");
-
-        if (accountId <= 0)
-            throw new ArgumentException(
-                "Mã tài khoản không hợp lệ.");
-
-        var donHang = await _donHangRepository
-            .ThanhToanBangViAsync(donHangId, accountId);
-
-        if (donHang == null)
-            return null;
-
-        return MapToDto(donHang);
     }
 
     public async Task<DonHangDto?> UpdateStatusAsync(

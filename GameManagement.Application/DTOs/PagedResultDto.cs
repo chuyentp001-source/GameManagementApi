@@ -9,7 +9,7 @@ public class PagedResultDto<T>
 
     public int PageSize { get; set; }
 
-    public int TotalRecords { get; set; }
+    public long TotalRecords { get; set; }
 
     public long TotalPages { get; set; }
 }

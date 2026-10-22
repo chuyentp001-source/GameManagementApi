@@ -172,6 +172,10 @@ public class DonHangRepository : IDonHangRepository
                     statusCode = 400;
                     message = "Vui lòng cập nhật đầy đủ thông tin tài khoản ngân hàng trước khi tạo đơn hàng.";
                     break;
+                case 50106:
+                    statusCode = 400;
+                    message = "Số dư ví không đủ để thanh toán.";
+                    break;
 
                 default:
                     throw;
@@ -202,78 +206,6 @@ public class DonHangRepository : IDonHangRepository
         }
 
         return MapDonHang(reader);
-    }
-
-    public async Task<List<DonHang>> GetByAccountIdAsync(int accountId)
-    {
-        var donHangs = new List<DonHang>();
-
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.OpenAsync();
-
-        using var command = new SqlCommand(
-            "dbo.sp_DonHang_GetByAccountId",
-            connection);
-
-        command.CommandType = CommandType.StoredProcedure;
-
-        command.Parameters.Add("@AccountId", SqlDbType.Int)
-            .Value = accountId;
-
-        using var reader = await command.ExecuteReaderAsync();
-
-        while (await reader.ReadAsync())
-        {
-            donHangs.Add(MapDonHang(reader));
-        }
-
-        return donHangs;
-    }
-
-    public async Task<DonHang?> ThanhToanBangViAsync(long donHangId, int accountId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-
-        using var command = new SqlCommand(
-            "dbo.sp_DonHang_ThanhToanBangVi",
-            connection);
-
-        command.CommandType = CommandType.StoredProcedure;
-
-        command.Parameters.Add("@DonHangId", SqlDbType.BigInt)
-            .Value = donHangId;
-
-        command.Parameters.Add("@AccountId", SqlDbType.Int)
-            .Value = accountId;
-
-        try
-        {
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-
-            if (!await reader.ReadAsync())
-                return null;
-
-            return MapDonHang(reader);
-        }
-        catch (SqlException ex)
-            when (ex.Number >= 50100 && ex.Number <= 50108)
-        {
-            var statusCode = ex.Number switch
-            {
-                50100 => 404,
-                50101 => 403,
-                50105 => 403,
-                50107 => 409,
-                50108 => 409,
-                _ => 400
-            };
-
-            throw new ThanhToanException(
-                ex.Message,
-                statusCode);
-        }
     }
 
     public async Task<DonHang?> UpdateStatusAsync(long donHangId, TrangThaiDonHang trangThaiDonHang, int nguoiCapNhatId)

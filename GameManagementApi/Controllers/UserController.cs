@@ -1,8 +1,10 @@
-﻿using System.Security.Claims;
+﻿
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GameManagement.Application.DTOs;
 using GameManagement.Application.Interfaces;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace GameManagementApi.Controllers;
 
@@ -18,8 +20,12 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet("XEM DANH SÁCH NGƯỜI DÙNG/ADMIN")]
+    // ADMIN: Xem danh sách người dùng
+    [HttpGet("admin/all")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "XEM DANH SÁCH NGƯỜI DÙNG/ADMIN",
+        Description = "Lấy danh sách người dùng, hỗ trợ phân trang và lọc theo họ tên, email, số điện thoại.")]
     public async Task<IActionResult> GetAll(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
@@ -44,8 +50,12 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpGet("CHI TIẾT HỒ SƠ/{id:int}/ADMIN")]
+    // ADMIN: Xem hồ sơ theo ID
+    [HttpGet("{id:int}", Name = "GetUserById")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "CHI TIẾT HỒ SƠ NGƯỜI DÙNG/ADMIN",
+        Description = "Lấy thông tin hồ sơ người dùng theo mã hồ sơ.")]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -71,18 +81,22 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpGet("XEM HỒ SƠ CỦA TÔI")]
+    // Người dùng xem hồ sơ của chính mình
+    [HttpGet("me")]
     [Authorize(Roles = "USER,ADMIN")]
+    [SwaggerOperation(
+        Summary = "XEM HỒ SƠ CỦA TÔI",
+        Description = "Lấy hồ sơ gắn với tài khoản đang đăng nhập.")]
     public async Task<IActionResult> GetProfile()
     {
-        var accountIdValue = User.FindFirstValue(
-            ClaimTypes.NameIdentifier);
+        var accountIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (!int.TryParse(accountIdValue, out int accountId))
         {
             return Unauthorized(new
             {
-                message = "Token không chứa AccountID hợp lệ."
+                message = "Token không chứa AccountId hợp lệ."
             });
         }
 
@@ -106,19 +120,23 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpPut("CẬP NHẬT HỒ SƠ CỦA TÔI")]
+    // Người dùng cập nhật hồ sơ của chính mình
+    [HttpPut("me")]
     [Authorize(Roles = "USER,ADMIN")]
+    [SwaggerOperation(
+        Summary = "CẬP NHẬT HỒ SƠ CỦA TÔI",
+        Description = "Cập nhật hồ sơ của tài khoản đang đăng nhập.")]
     public async Task<IActionResult> UpdateProfile(
         [FromBody] UpdateUserProfileDto dto)
     {
-        var accountIdValue = User.FindFirstValue(
-            ClaimTypes.NameIdentifier);
+        var accountIdValue =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (!int.TryParse(accountIdValue, out int accountId))
         {
             return Unauthorized(new
             {
-                message = "Token không chứa AccountID hợp lệ."
+                message = "Token không chứa AccountId hợp lệ."
             });
         }
 

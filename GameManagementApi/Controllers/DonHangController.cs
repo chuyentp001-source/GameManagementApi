@@ -1,4 +1,5 @@
-﻿using GameManagement.Application.DTOs;
+﻿
+using GameManagement.Application.DTOs;
 using GameManagement.Application.Interfaces;
 using GameManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -20,8 +21,12 @@ public class DonHangController : ControllerBase
         _donHangService = donHangService;
     }
 
-    [HttpGet("XEM DANH SÁCH ĐƠN HÀNG/ADMIN")]
+    // ADMIN: Xem danh sách tất cả đơn hàng
+    [HttpGet("admin/all")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "XEM DANH SÁCH ĐƠN HÀNG/ADMIN",
+        Description = "Xem tất cả đơn hàng, hỗ trợ phân trang, lọc và tìm kiếm.")]
     public async Task<IActionResult> GetAllPaged(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
@@ -47,7 +52,11 @@ public class DonHangController : ControllerBase
         });
     }
 
-    [HttpPost("TẠO ĐƠN HÀNG NẠP GAME")]
+    // Tạo đơn hàng mua gói nạp game
+    [HttpPost]
+    [SwaggerOperation(
+        Summary = "TẠO ĐƠN HÀNG NẠP GAME",
+        Description = "Tạo đơn mua gói nạp game cho tài khoản đang đăng nhập.")]
     public async Task<IActionResult> Create(
         [FromBody] CreateDonHangDto dto)
     {
@@ -55,30 +64,37 @@ public class DonHangController : ControllerBase
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!int.TryParse(accountIdClaim, out var accountId))
+        {
             return Unauthorized(new
             {
                 message = "Không xác định được tài khoản đăng nhập."
             });
+        }
 
-        var result =
-            await _donHangService.CreateAsync(accountId, dto);
+        var result = await _donHangService.CreateAsync(accountId, dto);
 
-        return CreatedAtAction(
-            nameof(GetById),
+        return CreatedAtRoute(
+            "GetDonHangById",
             new { id = result.DonHangId },
             result);
     }
 
-    [HttpGet("CHI TIẾT ĐƠN HÀNG/{id:long}")]
+    // Xem chi tiết đơn hàng
+    [HttpGet("{id:long}", Name = "GetDonHangById")]
+    [SwaggerOperation(
+        Summary = "CHI TIẾT ĐƠN HÀNG",
+        Description = "Xem chi tiết đơn hàng. Chỉ chủ đơn hàng, ADMIN hoặc CSKH được phép truy cập.")]
     public async Task<IActionResult> GetById(long id)
     {
         var result = await _donHangService.GetByIdAsync(id);
 
         if (result == null)
+        {
             return NotFound(new
             {
                 message = "Không tìm thấy đơn hàng."
             });
+        }
 
         var accountIdClaim =
             User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -98,58 +114,37 @@ public class DonHangController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("LỊCH SỬ ĐƠN HÀNG CỦA TÔI")]
-    public async Task<IActionResult> GetMyOrders()
+    // Xem danh sách đơn hàng của tài khoản đang đăng nhập
+    [HttpGet("my-orders")]
+    [Authorize]
+    [SwaggerOperation(
+     Summary = "Lấy lịch sử đơn hàng của tôi",
+     Description = "Lấy lịch sử đơn hàng của tài khoản đang đăng nhập, có phân trang."
+    )]
+    public async Task<IActionResult> GetMyOrders(
+     [FromQuery] int pageNumber = 1,
+     [FromQuery] int pageSize = 10)
     {
-        var accountIdClaim =
-            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var accountIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
 
         if (!int.TryParse(accountIdClaim, out var accountId))
-            return Unauthorized(new
-            {
-                message = "Không xác định được tài khoản đăng nhập."
-            });
+            return Unauthorized();
 
-        var result =
-            await _donHangService.GetByAccountIdAsync(accountId);
+        var result = await _donHangService.GetByAccountIdAsync(
+            accountId,
+            pageNumber,
+            pageSize);
 
         return Ok(result);
     }
 
-    [HttpPost("{id:long}/THANH TOÁN BẰNG VÍ")]
-    public async Task<IActionResult> ThanhToanBangVi(long id)
-    {
-        var accountIdClaim =
-            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!int.TryParse(accountIdClaim, out var accountId))
-        {
-            return Unauthorized(new
-            {
-                message = "Không xác định được tài khoản đăng nhập."
-            });
-        }
-
-        var result = await _donHangService
-            .ThanhToanBangViAsync(id, accountId);
-
-        if (result == null)
-        {
-            return NotFound(new
-            {
-                message = "Không tìm thấy đơn hàng."
-            });
-        }
-
-        return Ok(new
-        {
-            message = "Thanh toán bằng ví thành công.",
-            data = result
-        });
-    }
-
-    [HttpPatch("{id:long}/CẬP NHẬT TRẠNG THÁI/ADMIN")]
+    // ADMIN: Cập nhật trạng thái đơn hàng
+    [HttpPatch("{id:long}/status")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG/ADMIN",
+        Description = "Cập nhật trạng thái xử lý đơn hàng.")]
     public async Task<IActionResult> UpdateStatus(
         long id,
         [FromBody] UpdateDonHangStatusDto dto)
@@ -206,8 +201,12 @@ public class DonHangController : ControllerBase
         });
     }
 
-    [HttpPost("{id:long}/HOÀN TIỀN VÀO VÍ/ADMIN")]
+    // ADMIN: Hoàn tiền vào ví
+    [HttpPost("{id:long}/hoan-tien")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "HOÀN TIỀN VÀO VÍ/ADMIN",
+        Description = "Hoàn tiền vào ví cho đơn hàng đủ điều kiện hoàn tiền.")]
     public async Task<IActionResult> HoanTien(long id)
     {
         var accountIdClaim =
@@ -240,12 +239,16 @@ public class DonHangController : ControllerBase
         });
     }
 
-    [HttpPost("TẠO YÊU CẦU NẠP TIỀN VÀO VÍ")]
-    [Authorize]
+    // Tạo yêu cầu nạp tiền vào ví
+    [HttpPost("nap-tien")]
+    [SwaggerOperation(
+        Summary = "TẠO YÊU CẦU NẠP TIỀN VÀO VÍ",
+        Description = "Tạo yêu cầu nạp tiền bằng chuyển khoản ngân hàng.")]
     public async Task<IActionResult> TaoYeuCauNapTien(
         [FromBody] CreateYeuCauNapTienDto dto)
     {
-        var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var accountIdClaim =
+            User.FindFirst(ClaimTypes.NameIdentifier);
 
         if (accountIdClaim == null ||
             !int.TryParse(accountIdClaim.Value, out var accountId))
@@ -272,11 +275,16 @@ public class DonHangController : ControllerBase
         });
     }
 
-    [HttpPost("{donHangId:long}/XÁC NHẬN NẠP TIỀN VÀO VÍ/ADMIN")]
+    // ADMIN: Xác nhận đã nhận tiền nạp vào ví
+    [HttpPost("{donHangId:long}/xac-nhan-nap-tien")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "XÁC NHẬN NẠP TIỀN VÀO VÍ/ADMIN",
+        Description = "Xác nhận đã nhận tiền chuyển khoản và ghi nhận vào ví khách hàng.")]
     public async Task<IActionResult> XacNhanNapTien(long donHangId)
     {
-        var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var accountIdClaim =
+            User.FindFirst(ClaimTypes.NameIdentifier);
 
         if (accountIdClaim == null ||
             !int.TryParse(accountIdClaim.Value, out var nguoiXacNhanId))
@@ -303,11 +311,16 @@ public class DonHangController : ControllerBase
         });
     }
 
-    [HttpPost("{id:long}/XÁC NHẬN THANH TOÁN CHUYỂN KHOẢN/ADMIN")]
+    // ADMIN: Xác nhận thanh toán chuyển khoản mua gói
+    [HttpPost("{id:long}/xac-nhan-chuyen-khoan")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "XÁC NHẬN THANH TOÁN CHUYỂN KHOẢN/ADMIN",
+        Description = "Xác nhận đã nhận tiền chuyển khoản cho đơn mua gói nạp game.")]
     public async Task<IActionResult> XacNhanThanhToanChuyenKhoan(long id)
     {
-        var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var accountIdClaim =
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!int.TryParse(accountIdClaim, out var nguoiXacNhanId))
         {
@@ -335,11 +348,16 @@ public class DonHangController : ControllerBase
         });
     }
 
-    [HttpPost("{id:long}/HOÀN TIỀN CHUYỂN KHOẢN/ADMIN")]
+    // ADMIN: Xác nhận đã hoàn tiền chuyển khoản trực tiếp
+    [HttpPost("{id:long}/hoan-tien-chuyen-khoan")]
     [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+        Summary = "HOÀN TIỀN CHUYỂN KHOẢN/ADMIN",
+        Description = "Ghi nhận việc ADMIN đã hoàn tiền chuyển khoản trực tiếp cho khách hàng.")]
     public async Task<IActionResult> HoanTienChuyenKhoan(long id)
     {
-        var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var accountIdClaim =
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (!int.TryParse(accountIdClaim, out var nguoiCapNhatId))
             return Unauthorized();
@@ -349,10 +367,12 @@ public class DonHangController : ControllerBase
             nguoiCapNhatId);
 
         if (donHang == null)
+        {
             return NotFound(new
             {
                 message = "Không tìm thấy đơn hàng."
             });
+        }
 
         return Ok(new
         {

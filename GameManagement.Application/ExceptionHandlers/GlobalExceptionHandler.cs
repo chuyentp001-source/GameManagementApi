@@ -1,5 +1,4 @@
-﻿
-using GameManagement.Application.Exceptions;
+﻿using GameManagement.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -95,6 +94,10 @@ public class GlobalExceptionHandler
                 message = ex.Message;
                 break;
             case UserException ex:
+                statusCode = ex.StatusCode;
+                message = ex.Message;
+                break;
+            case ChietKhauException ex:
                 statusCode = ex.StatusCode;
                 message = ex.Message;
                 break;

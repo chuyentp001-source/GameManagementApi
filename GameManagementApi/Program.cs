@@ -195,6 +195,14 @@ builder.Services.AddScoped<IGoiNapRepository, GoiNapRepository>();
 builder.Services.AddScoped<IDonHangRepository, DonHangRepository>();
 builder.Services.AddScoped<IDonHangService, DonHangService>();
 
+//Module Chiết Kháu
+builder.Services.AddScoped<IChietKhauRepository, ChietKhauRepository>();
+builder.Services.AddScoped<IChietKhauService, ChietKhauService>();
+
+//Module Lịch Sử Ví
+builder.Services.AddScoped<ILichSuViRepository, LichSuViRepository>();
+builder.Services.AddScoped<ILichSuViService, LichSuViService>();
+
 // User helper
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 

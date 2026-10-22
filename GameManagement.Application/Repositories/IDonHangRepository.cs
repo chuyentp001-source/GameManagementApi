@@ -9,8 +9,6 @@ public interface IDonHangRepository
     Task<PagedResultDto<DonHang>> GetAllPagedAsync(int pageNumber, int pageSize, string? loaiGiaoDich, string? trangThaiDonHang, string? trangThaiThanhToan, int? accountId, string? tuKhoa);
     Task<DonHang> CreateAsync(DonHang donHang);
     Task<DonHang?> GetByIdAsync(long id);
-    Task<List<DonHang>> GetByAccountIdAsync(int accountId);
-    Task<DonHang?> ThanhToanBangViAsync(long donHangId, int accountId);
     Task<DonHang?> UpdateStatusAsync(long donHangId, TrangThaiDonHang trangThaiDonHang, int nguoiCapNhatId);
     Task<DonHang?> HoanTienAsync(long donHangId,int nguoiCapNhatId);
     Task<DonHang?> TaoYeuCauNapTienAsync(int accountId,decimal soTien);
