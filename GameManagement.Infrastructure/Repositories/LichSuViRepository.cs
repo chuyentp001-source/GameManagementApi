@@ -16,8 +16,7 @@ public class LichSuViRepository : ILichSuViRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<(List<LichSuViDto> Items, long TotalRecords)>
-        GetByAccountPagedAsync(
+    public async Task<(List<LichSuViDto> Items, long TotalRecords)>GetByAccountPagedAsync(
             int accountId,
             int pageNumber,
             int pageSize,
@@ -26,52 +25,58 @@ public class LichSuViRepository : ILichSuViRepository
             DateTime? tuNgay,
             DateTime? denNgay)
     {
-        var items = new List<LichSuViDto>();
-        long totalRecords = 0;
-
-        await using var connection = _connectionFactory.CreateConnection();
-        await connection.OpenAsync();
-
-        await using var command = new SqlCommand(
-            "dbo.sp_LichSuVi_GetByAccountPaged", connection);
-
-        command.CommandType = CommandType.StoredProcedure;
-
-        AddFilterParameters(
-            command, accountId, pageNumber, pageSize,
-            loaiGiaoDich, trangThai, tuNgay, denNgay);
-
-        await using var reader = await command.ExecuteReaderAsync();
-
-        if (await reader.ReadAsync())
-            totalRecords = reader.GetInt64(reader.GetOrdinal("TotalRecords"));
-
-        if (await reader.NextResultAsync())
+        try
         {
-            while (await reader.ReadAsync())
-            {
-                items.Add(new LichSuViDto
-                {
-                    LichSuId = reader.GetInt64(reader.GetOrdinal("LichSuId")),
-                    DonHangId = reader.IsDBNull(reader.GetOrdinal("DonHangId"))
-                        ? null
-                        : reader.GetInt64(reader.GetOrdinal("DonHangId")),
-                    LoaiGiaoDich = reader.GetString(reader.GetOrdinal("LoaiGiaoDich")),
-                    SoTien = reader.GetDecimal(reader.GetOrdinal("SoTien")),
-                    TrangThai = reader.GetString(reader.GetOrdinal("TrangThai")),
-                    GhiChu = reader.IsDBNull(reader.GetOrdinal("GhiChu"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("GhiChu")),
-                    NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao"))
-                });
-            }
-        }
+            var items = new List<LichSuViDto>();
+            long totalRecords = 0;
 
-        return (items, totalRecords);
+            await using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
+            await using var command = new SqlCommand(
+                "dbo.sp_LichSuVi_GetByAccountPaged", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            AddFilterParameters(
+                command, accountId, pageNumber, pageSize,
+                loaiGiaoDich, trangThai, tuNgay, denNgay);
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+                totalRecords = reader.GetInt64(reader.GetOrdinal("TotalRecords"));
+
+            if (await reader.NextResultAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    items.Add(new LichSuViDto
+                    {
+                        LichSuId = reader.GetInt64(reader.GetOrdinal("LichSuId")),
+                        DonHangId = reader.IsDBNull(reader.GetOrdinal("DonHangId"))
+                            ? null
+                            : reader.GetInt64(reader.GetOrdinal("DonHangId")),
+                        LoaiGiaoDich = reader.GetString(reader.GetOrdinal("LoaiGiaoDich")),
+                        SoTien = reader.GetDecimal(reader.GetOrdinal("SoTien")),
+                        TrangThai = reader.GetString(reader.GetOrdinal("TrangThai")),
+                        GhiChu = reader.IsDBNull(reader.GetOrdinal("GhiChu"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("GhiChu")),
+                        NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao"))
+                    });
+                }
+            }
+
+            return (items, totalRecords);
+        }
+        catch (SqlException ex) when (ex.Number is >= 50311 and <= 50336)
+        {
+            throw new ArgumentException(ex.Message); 
+        }
     }
 
-    public async Task<(List<LichSuViAdminDto> Items, long TotalRecords)>
-        GetAllPagedAsync(
+    public async Task<(List<LichSuViAdminDto> Items, long TotalRecords)>GetAllPagedAsync(
             int? accountId,
             int pageNumber,
             int pageSize,
@@ -80,57 +85,64 @@ public class LichSuViRepository : ILichSuViRepository
             DateTime? tuNgay,
             DateTime? denNgay)
     {
-        var items = new List<LichSuViAdminDto>();
-        long totalRecords = 0;
-
-        await using var connection = _connectionFactory.CreateConnection();
-        await connection.OpenAsync();
-
-        await using var command = new SqlCommand(
-            "dbo.sp_LichSuVi_GetAllPaged", connection);
-
-        command.CommandType = CommandType.StoredProcedure;
-
-        command.Parameters.Add("@AccountId", SqlDbType.Int).Value =
-            accountId.HasValue ? accountId.Value : DBNull.Value;
-
-        AddCommonFilterParameters(
-            command, pageNumber, pageSize,
-            loaiGiaoDich, trangThai, tuNgay, denNgay);
-
-        await using var reader = await command.ExecuteReaderAsync();
-
-        if (await reader.ReadAsync())
-            totalRecords = reader.GetInt64(reader.GetOrdinal("TotalRecords"));
-
-        if (await reader.NextResultAsync())
+        try
         {
-            while (await reader.ReadAsync())
-            {
-                items.Add(new LichSuViAdminDto
-                {
-                    LichSuId = reader.GetInt64(reader.GetOrdinal("LichSuId")),
-                    AccountId = reader.GetInt32(reader.GetOrdinal("AccountId")),
-                    DonHangId = reader.IsDBNull(reader.GetOrdinal("DonHangId"))
-                        ? null
-                        : reader.GetInt64(reader.GetOrdinal("DonHangId")),
-                    NguoiThucHienId =
-                        reader.IsDBNull(reader.GetOrdinal("NguoiThucHienId"))
-                            ? null
-                            : reader.GetInt32(reader.GetOrdinal("NguoiThucHienId")),
-                    LoaiGiaoDich = reader.GetString(reader.GetOrdinal("LoaiGiaoDich")),
-                    SoTien = reader.GetDecimal(reader.GetOrdinal("SoTien")),
-                    TrangThai = reader.GetString(reader.GetOrdinal("TrangThai")),
-                    GhiChu = reader.IsDBNull(reader.GetOrdinal("GhiChu"))
-                        ? null
-                        : reader.GetString(reader.GetOrdinal("GhiChu")),
-                    NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
-                    NgayCapNhat = reader.GetDateTime(reader.GetOrdinal("NgayCapNhat"))
-                });
-            }
-        }
+            var items = new List<LichSuViAdminDto>();
+            long totalRecords = 0;
 
-        return (items, totalRecords);
+            await using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
+
+            await using var command = new SqlCommand(
+                "dbo.sp_LichSuVi_GetAllPaged", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@AccountId", SqlDbType.Int).Value =
+                accountId.HasValue ? accountId.Value : DBNull.Value;
+
+            AddCommonFilterParameters(
+                command, pageNumber, pageSize,
+                loaiGiaoDich, trangThai, tuNgay, denNgay);
+
+            await using var reader = await command.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+                totalRecords = reader.GetInt64(reader.GetOrdinal("TotalRecords"));
+
+            if (await reader.NextResultAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    items.Add(new LichSuViAdminDto
+                    {
+                        LichSuId = reader.GetInt64(reader.GetOrdinal("LichSuId")),
+                        AccountId = reader.GetInt32(reader.GetOrdinal("AccountId")),
+                        DonHangId = reader.IsDBNull(reader.GetOrdinal("DonHangId"))
+                            ? null
+                            : reader.GetInt64(reader.GetOrdinal("DonHangId")),
+                        NguoiThucHienId =
+                            reader.IsDBNull(reader.GetOrdinal("NguoiThucHienId"))
+                                ? null
+                                : reader.GetInt32(reader.GetOrdinal("NguoiThucHienId")),
+                        LoaiGiaoDich = reader.GetString(reader.GetOrdinal("LoaiGiaoDich")),
+                        SoTien = reader.GetDecimal(reader.GetOrdinal("SoTien")),
+                        TrangThai = reader.GetString(reader.GetOrdinal("TrangThai")),
+                        GhiChu = reader.IsDBNull(reader.GetOrdinal("GhiChu"))
+                            ? null
+                            : reader.GetString(reader.GetOrdinal("GhiChu")),
+                        NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
+                        NgayCapNhat = reader.GetDateTime(reader.GetOrdinal("NgayCapNhat"))
+                    });
+                }
+            }
+
+            return (items, totalRecords);
+        }
+        catch (SqlException ex) when (ex.Number is >= 50311 and <= 50336)
+        {
+            throw new ArgumentException(ex.Message); 
+        }
     }
 
     public async Task<LichSuViDto?> GetByIdAndAccountAsync(

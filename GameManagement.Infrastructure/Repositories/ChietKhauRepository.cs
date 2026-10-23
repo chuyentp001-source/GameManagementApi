@@ -23,7 +23,8 @@ public class ChietKhauRepository : IChietKhauRepository
         int pageNumber,
         int pageSize,
         int? goiNapId,
-        string? trangThai)
+        string? trangThai,
+        string? tuKhoa)
     {
         var result = new PagedResultDto<ChietKhau>
         {
@@ -47,6 +48,8 @@ public class ChietKhauRepository : IChietKhauRepository
             string.IsNullOrWhiteSpace(trangThai)
                 ? DBNull.Value
                 : trangThai.Trim();
+        command.Parameters.Add("@TuKhoa", SqlDbType.NVarChar, 100).Value =
+            string.IsNullOrWhiteSpace(tuKhoa) ? DBNull.Value : tuKhoa.Trim();
 
         await connection.OpenAsync();
 
@@ -106,8 +109,44 @@ public class ChietKhauRepository : IChietKhauRepository
 
         return result;
     }
+    public async Task<ChietKhau?> GetByIdAsync(int chietKhauId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        using var command = new SqlCommand("dbo.sp_ChietKhau_GetById", connection);
 
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.Add("@ChietKhauId", SqlDbType.Int).Value = chietKhauId;
 
+        await connection.OpenAsync();
+
+        using var reader = await command.ExecuteReaderAsync();
+
+        if (!await reader.ReadAsync())
+            return null;   // đã xóa hoặc không tồn tại: SP không trả dòng
+
+        var trangThaiStr = reader.GetString(6).Trim();
+
+        if (!Enum.TryParse<ChietKhauStatus>(trangThaiStr, ignoreCase: false, out var trangThaiEnum)
+            || !Enum.IsDefined(trangThaiEnum))
+        {
+            throw new DataException($"Trạng thái chiết khấu '{trangThaiStr}' không hợp lệ.");
+        }
+
+        return new ChietKhau
+        {
+            ChietKhauId = reader.GetInt32(0),
+            GoiNapId = reader.GetInt32(1),
+            TenChietKhau = reader.GetString(2),
+            PhanTramChietKhau = reader.GetDecimal(3),
+            NgayBatDau = reader.GetDateTime(4),
+            NgayKetThuc = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+            TrangThai = trangThaiStr,
+            NguoiTaoId = reader.IsDBNull(7) ? null : reader.GetInt32(7),
+            NguoiCapNhatId = reader.IsDBNull(8) ? null : reader.GetInt32(8),
+            NgayTao = reader.GetDateTime(9),
+            NgayCapNhat = reader.GetDateTime(10)
+        };
+    }
     public async Task<ChietKhau> CreateAsync(ChietKhau chietKhau)
     {
         try
@@ -141,8 +180,8 @@ public class ChietKhauRepository : IChietKhauRepository
                     ? chietKhau.NgayKetThuc.Value
                     : DBNull.Value;
 
-            command.Parameters.Add("@TrangThai", SqlDbType.VarChar, 30)
-                .Value = chietKhau.TrangThai;
+            //command.Parameters.Add("@TrangThai", SqlDbType.VarChar, 30)
+            //    .Value = chietKhau.TrangThai;
 
             command.Parameters.Add("@NguoiTaoId", SqlDbType.Int)
                 .Value = chietKhau.NguoiTaoId.HasValue
@@ -192,11 +231,15 @@ public class ChietKhauRepository : IChietKhauRepository
                 NgayCapNhat = reader.GetDateTime(10)
             };
         }
-        catch (SqlException ex) when (ex.Number == 50218)
+        catch (SqlException ex) when (ex.Number is >= 50211 and <= 50244)
         {
-            throw new ChietKhauException(
-                "Không thể tạo chiết khấu cho gói nạp đang ngừng hoạt động.",
-                StatusCodes.Status400BadRequest);
+            var status = ex.Number switch
+            {
+                50212 or 50222 or 50232 => 404,
+                50233 or 50244 => 409,
+                _ => 400
+            };
+            throw new ChietKhauException(ex.Message, status);
         }
     }
 
@@ -279,11 +322,15 @@ public class ChietKhauRepository : IChietKhauRepository
                 NgayCapNhat = reader.GetDateTime(10)
             };
         }
-        catch (SqlException ex) when (ex.Number == 50222)
+        catch (SqlException ex) when (ex.Number is >= 50211 and <= 50244)
         {
-            throw new ChietKhauException(
-                "Không tìm thấy chiết khấu cần cập nhật.",
-                404);
+            var status = ex.Number switch
+            {
+                50212 or 50222 or 50232 => 404,
+                50233 or 50244 => 409,
+                _ => 400
+            };
+            throw new ChietKhauException(ex.Message, status);
         }
     }
 

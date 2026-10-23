@@ -30,13 +30,31 @@ public class ChietKhauController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] int? goiNapId = null,
-        [FromQuery] ChietKhauStatus? trangThai = null)
+        [FromQuery] ChietKhauStatus? trangThai = null,
+        [FromQuery] string? tuKhoa = null)
     {
         var result = await _chietKhauService.GetAllPagedAsync(
             pageNumber,
             pageSize,
             goiNapId,
-            trangThai?.ToString());
+            trangThai?.ToString(),
+            tuKhoa);
+
+        return Ok(result);
+    }
+    [HttpGet("{id:int}")]
+    [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+    Summary = "LẤY CHI TIẾT CHIẾT KHẤU/ADMIN",
+    Description = "Lấy chi tiết một chương trình chiết khấu theo mã.")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var result = await _chietKhauService.GetByIdAsync(id);
+
+        if (result == null)
+        {
+            return NotFound(new { message = "Không tìm thấy chiết khấu." });
+        }
 
         return Ok(result);
     }
@@ -61,9 +79,9 @@ public class ChietKhauController : ControllerBase
             accountId);
 
         return CreatedAtAction(
-            nameof(GetAllPaged),
-            new { pageNumber = 1, pageSize = 10 },
-            result);
+         nameof(GetById),
+         new { id = result.ChietKhauId },
+         result);
     }
 
 

@@ -93,18 +93,14 @@ public class UserRepository : IUserRepository
             };
         }
         catch (SqlException ex) when (
-            ex.Number == 50021 ||
-            ex.Number == 50022 ||
-            ex.Number == 50023)
+            ex.Number == 50022 || ex.Number == 50023 || ex.Number == 50024)
         {
             var statusCode = ex.Number switch
             {
-                50021 => 404,
-                50022 => 404,
+                50022 or 50024 => 404,
                 50023 => 409,
                 _ => 400
             };
-
             throw new UserException(ex.Message, statusCode);
         }
         catch (SqlException ex)

@@ -385,6 +385,10 @@ public class AccountRepository : IAccountRepository
             throw new DuplicateException(
                 "Tên đăng nhập đã tồn tại.");
         }
+        catch (SqlException ex) when (ex.Number == 50014)
+        {
+            throw new DuplicateException("Email đã được sử dụng.");
+        }
 
         if (result == null || result == DBNull.Value)
         {

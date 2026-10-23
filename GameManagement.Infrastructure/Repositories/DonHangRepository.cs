@@ -140,7 +140,7 @@ public class DonHangRepository : IDonHangRepository
             {
                 case 50030:
                     statusCode = 404;
-                    message = "Gói nạp không tồn tại hoặc đã ngừng hoạt động.";
+                    message = "Gói nạp hoặc Game không tồn tại, đã bị xóa hoặc không hoạt động.";
                     break;
 
                 case 50031:
@@ -171,6 +171,26 @@ public class DonHangRepository : IDonHangRepository
                 case 50036:
                     statusCode = 400;
                     message = "Vui lòng cập nhật đầy đủ thông tin tài khoản ngân hàng trước khi tạo đơn hàng.";
+                    break;
+                case 50037:
+                    statusCode = 409;
+                    message = "Hệ thống đang bận, vui lòng thử lại.";
+                    break;
+                case 50038:
+                    statusCode = 409;
+                    message = "Bạn đang có một giao dịch chuyển khoản chờ thanh toán. Vui lòng thanh toán hoặc đợi giao dịch hết hạn.";
+                    break;
+                case 50039:
+                    statusCode = 400;
+                    message = "Số tiền thanh toán không hợp lệ.";
+                    break;
+                case 50040:
+                    statusCode = 400;
+                    message = "Game này yêu cầu chọn Server.";
+                    break;
+                case 50041:
+                    statusCode = 400;
+                    message = "Game đang bảo trì, không thể tạo đơn hàng.";
                     break;
                 case 50106:
                     statusCode = 400;
@@ -333,19 +353,14 @@ public class DonHangRepository : IDonHangRepository
 
             return MapDonHang(reader);
         }
-        catch (SqlException ex) when (
-            ex.Number >= 50400 && ex.Number <= 50405)
-        {
+        catch(SqlException ex) when(ex.Number >= 50400 && ex.Number <= 50407)
+{
             var statusCode = ex.Number switch
             {
-                50400 => 400,
-                50401 => 400,
-                50403 => 400,
-                50404 => 400,
                 50402 => 403,
+                50406 or 50407 => 409,
                 _ => 400
             };
-
             throw new DonHangException(ex.Message, statusCode);
         }
     }
