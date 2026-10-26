@@ -25,14 +25,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("Jwt"));
 
+//1. Đọc và kiểm tra cấu hình JWT trước
+var jwtSettings = builder.Configuration
+    .GetSection("Jwt")
+    .Get<GameManagement.Infrastructure.Configurations.JwtSettings>();
+
+if (jwtSettings is null ||
+string.IsNullOrWhiteSpace(jwtSettings.Key) ||
+jwtSettings.Key.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JWT configuration is missing or invalid. " +
+        "Configure Jwt:Key using User Secrets or an environment variable. " +
+        "The key must contain at least 32 characters.");
+}
+
 // Đăng ký dịch vụ xác thực JWT Bearer
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var jwtSettings = builder.Configuration
-            .GetSection("Jwt")
-            .Get<GameManagement.Infrastructure.Configurations.JwtSettings>();
-
         // Cấu hình các điều kiện kiểm tra Token
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -205,7 +216,6 @@ builder.Services.AddScoped<ILichSuViService, LichSuViService>();
 
 // User helper
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
 builder.Services.AddHostedService<DonHangExpirationService>();
 
 // =========================================================================

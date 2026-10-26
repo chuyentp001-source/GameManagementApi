@@ -385,7 +385,7 @@ public class AccountRepository : IAccountRepository
             throw new DuplicateException(
                 "Tên đăng nhập đã tồn tại.");
         }
-        catch (SqlException ex) when (ex.Number == 50014)
+        catch (SqlException ex) when (ex.Number == 50016)
         {
             throw new DuplicateException("Email đã được sử dụng.");
         }
