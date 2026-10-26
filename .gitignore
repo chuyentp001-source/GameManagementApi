@@ -2,6 +2,10 @@
 .vs/
 bin/
 obj/
+.vscode/
+.idea/
+*.log
+TestResults/
 *.user
 *.userosscache
 *.suo
