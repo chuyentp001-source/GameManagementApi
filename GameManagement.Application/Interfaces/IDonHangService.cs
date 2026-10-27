@@ -14,4 +14,5 @@ public interface IDonHangService
     Task<DonHangDto?> XacNhanNapTienAsync(long donHangId,int nguoiXacNhanId);
     Task<DonHangDto?> XacNhanThanhToanChuyenKhoanAsync(long donHangId,int nguoiXacNhanId);
     Task<DonHangDto?> HoanTienChuyenKhoanAsync(long donHangId, int nguoiCapNhatId);
+    Task<DonHangDto?> XacNhanChuyenKhoanMuonAsync(long donHangId, int nguoiXacNhanId, string? ghiChu);
 }

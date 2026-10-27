@@ -15,4 +15,5 @@ public interface IDonHangRepository
     Task<DonHang?> XacNhanNapTienAsync(long donHangId,int nguoiXacNhanId);
     Task<DonHang?> XacNhanThanhToanChuyenKhoanAsync(long donHangId,int nguoiXacNhanId);
     Task<DonHang?> HoanTienChuyenKhoanAsync(long donHangId, int nguoiCapNhatId);
+    Task<DonHang?> XacNhanChuyenKhoanMuonAsync(long donHangId, int nguoiXacNhanId, string? ghiChu);
 }

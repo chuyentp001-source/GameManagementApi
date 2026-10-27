@@ -99,6 +99,25 @@ public class DonHangService : IDonHangService
             throw new InvalidGoiNapException(
                 "Gói nạp hiện không hoạt động.");
 
+        if (goiNap.Game == null)
+        {
+            throw new InvalidOperationException(
+                "Không lấy được thông tin Game của gói nạp.");
+        }
+
+        if (!goiNap.Game.CoServer &&
+            !string.IsNullOrWhiteSpace(dto.Server))
+        {
+            throw new ArgumentException(
+                "Game này không sử dụng Server.");
+        }
+
+        if (goiNap.Game.CoServer &&
+            string.IsNullOrWhiteSpace(dto.Server))
+        {
+            throw new ArgumentException(
+                "Game này yêu cầu chọn Server.");
+        }
         if (goiNap.GiaGoc < 1000)
             throw new InvalidGoiNapException(
                 "Giá gói nạp không hợp lệ.");
@@ -323,6 +342,17 @@ public class DonHangService : IDonHangService
             return null;
 
         return MapToDto(donHang);
+    }
+    public async Task<DonHangDto?> XacNhanChuyenKhoanMuonAsync(
+    long donHangId, int nguoiXacNhanId, string? ghiChu)
+    {
+        if (ghiChu != null && ghiChu.Length > 300)
+            throw new ArgumentException("Ghi chú không được dài quá 300 ký tự.");
+
+        var donHang = await _donHangRepository
+            .XacNhanChuyenKhoanMuonAsync(donHangId, nguoiXacNhanId, ghiChu);
+
+        return donHang == null ? null : MapToDto(donHang);
     }
 
     private static DonHangDto MapToDto(DonHang donHang)

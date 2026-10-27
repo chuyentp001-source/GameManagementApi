@@ -499,6 +499,37 @@ public class DonHangRepository : IDonHangRepository
             throw new DonHangException(ex.Message, statusCode);
         }
     }
+    public async Task<DonHang?> XacNhanChuyenKhoanMuonAsync(
+    long donHangId, int nguoiXacNhanId, string? ghiChu)
+    {
+        try
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            using var command = new SqlCommand(
+                "dbo.sp_DonHang_XacNhanChuyenKhoanMuon", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add("@DonHangId", SqlDbType.BigInt).Value = donHangId;
+            command.Parameters.Add("@NguoiXacNhanId", SqlDbType.Int).Value = nguoiXacNhanId;
+            command.Parameters.Add("@GhiChu", SqlDbType.NVarChar, 300).Value =
+                string.IsNullOrWhiteSpace(ghiChu) ? DBNull.Value : ghiChu.Trim();
+
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+
+            return await reader.ReadAsync() ? MapDonHang(reader) : null;
+        }
+        catch (SqlException ex) when (ex.Number >= 50800 && ex.Number <= 50806)
+        {
+            var statusCode = ex.Number switch
+            {
+                50800 => 404,
+                50804 or 50805 => 403,
+                _ => 400
+            };
+            throw new DonHangException(ex.Message, statusCode);
+        }
+    }
 
     private static DonHang MapDonHang(SqlDataReader reader)
     {

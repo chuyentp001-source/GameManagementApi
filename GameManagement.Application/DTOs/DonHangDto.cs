@@ -47,7 +47,6 @@ public class YeuCauNapTienDto
     public DateTime NgayTao { get; set; }
 }
 
-
 public class CreateDonHangDto
 {
     [Required(ErrorMessage = "Gói nạp không được để trống.")]
@@ -76,4 +75,9 @@ public class CreateYeuCauNapTienDto
     [Range(typeof(decimal), "10000", "1000000",
         ErrorMessage = "Số tiền nạp phải từ 10.000 đến 1.000.000 VNĐ.")]
     public decimal SoTien { get; set; }
+}
+
+public class XacNhanMuonRequest
+{
+    public string? GhiChu {  get; set; }
 }

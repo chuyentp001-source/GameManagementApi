@@ -23,7 +23,7 @@ public class DonHangController : ControllerBase
 
     // ADMIN: Xem danh sách tất cả đơn hàng
     [HttpGet("admin/all")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,CSKH")]
     [SwaggerOperation(
         Summary = "XEM DANH SÁCH ĐƠN HÀNG/ADMIN",
         Description = "Xem tất cả đơn hàng, hỗ trợ phân trang, lọc và tìm kiếm.")]
@@ -141,7 +141,7 @@ public class DonHangController : ControllerBase
 
     // ADMIN: Cập nhật trạng thái đơn hàng
     [HttpPatch("{id:long}/status")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,CSKH")]
     [SwaggerOperation(
         Summary = "CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG/ADMIN",
         Description = "Cập nhật trạng thái xử lý đơn hàng.")]
@@ -379,5 +379,26 @@ public class DonHangController : ControllerBase
             message = "Đã xác nhận hoàn tiền chuyển khoản thành công.",
             data = donHang
         });
+    }
+
+    [HttpPost("{id:long}/xac-nhan-chuyen-khoan-muon")]
+    [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(
+    Summary = "GHI NHẬN CHUYỂN KHOẢN MUỘN/ADMIN",
+    Description = "Đơn chuyển khoản đã hết hạn nhưng khách vẫn chuyển tiền: cộng tiền vào ví khách.")]
+    public async Task<IActionResult> XacNhanChuyenKhoanMuon(
+    long id, [FromBody] XacNhanMuonRequest? request)
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null || !int.TryParse(claim.Value, out var nguoiXacNhanId))
+            return Unauthorized();
+
+        var donHang = await _donHangService
+            .XacNhanChuyenKhoanMuonAsync(id, nguoiXacNhanId, request?.GhiChu);
+
+        if (donHang == null)
+            return NotFound(new { message = "Không tìm thấy đơn hàng." });
+
+        return Ok(new { message = "Đã ghi nhận chuyển khoản muộn và cộng tiền vào ví.", data = donHang });
     }
 }

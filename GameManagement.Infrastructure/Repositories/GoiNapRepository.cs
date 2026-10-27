@@ -238,7 +238,13 @@ public class GoiNapRepository : IGoiNapRepository
                 : reader.GetInt32(reader.GetOrdinal("NguoiCapNhatId")),
 
             NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
-            NgayCapNhat = reader.GetDateTime(reader.GetOrdinal("NgayCapNhat"))
+            NgayCapNhat = reader.GetDateTime(reader.GetOrdinal("NgayCapNhat")),
+
+             Game = new Game
+             {
+                 GameId = reader.GetInt32(reader.GetOrdinal("GameId")),
+                 CoServer = reader.GetBoolean(reader.GetOrdinal("CoServer"))
+             }
         };
     }
 
