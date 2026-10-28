@@ -10,6 +10,8 @@ public partial class GoiNap
 
     public int GameId { get; set; }
 
+    public int? ChietKhauId { get; set; }
+
     public string TenGoiNap { get; set; } = null!;
 
     public decimal GiaGoc { get; set; }
@@ -25,7 +27,7 @@ public partial class GoiNap
 
     public DateTime NgayCapNhat { get; set; }
 
-    public virtual ICollection<ChietKhau> ChietKhaus { get; set; } = new List<ChietKhau>();
+    public virtual ChietKhau? ChietKhau { get; set; }
 
     public virtual ICollection<DonHang> DonHangs { get; set; } = new List<DonHang>();
 

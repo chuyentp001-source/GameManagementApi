@@ -6,8 +6,6 @@ public partial class ChietKhau
 {
     public int ChietKhauId { get; set; }
 
-    public int GoiNapId { get; set; }
-
     public string TenChietKhau { get; set; } = null!;
 
     public decimal PhanTramChietKhau { get; set; }
@@ -27,8 +25,6 @@ public partial class ChietKhau
     public DateTime NgayCapNhat { get; set; }
 
     public virtual ICollection<DonHang> DonHangs { get; set; } = new List<DonHang>();
-
-    public virtual GoiNap GoiNap { get; set; } = null!;
 
     public virtual Account? NguoiCapNhat { get; set; }
 

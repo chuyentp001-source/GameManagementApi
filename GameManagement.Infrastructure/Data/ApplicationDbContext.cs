@@ -65,38 +65,56 @@ public partial class ApplicationDbContext : DbContext
                 .HasConstraintName("FK_Account_NguoiTao");
         });
 
+
         modelBuilder.Entity<ChietKhau>(entity =>
         {
             entity.ToTable("ChietKhau");
 
-            entity.HasIndex(e => e.GoiNapId, "IX_ChietKhau_GoiNapID");
+            entity.Property(e => e.ChietKhauId)
+                .HasColumnName("ChietKhauID");
 
-            entity.Property(e => e.ChietKhauId).HasColumnName("ChietKhauID");
-            entity.Property(e => e.GoiNapId).HasColumnName("GoiNapID");
-            entity.Property(e => e.NgayCapNhat).HasDefaultValueSql("(sysdatetime())", "DF_ChietKhau_NgayCapNhat");
-            entity.Property(e => e.NgayTao).HasDefaultValueSql("(sysdatetime())", "DF_ChietKhau_NgayTao");
-            entity.Property(e => e.NguoiCapNhatId).HasColumnName("NguoiCapNhatID");
-            entity.Property(e => e.NguoiTaoId).HasColumnName("NguoiTaoID");
-            entity.Property(e => e.PhanTramChietKhau).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.TenChietKhau).HasMaxLength(200);
+            entity.Property(e => e.NgayCapNhat)
+                .HasDefaultValueSql(
+                    "(sysdatetime())",
+                    "DF_ChietKhau_NgayCapNhat");
+
+            entity.Property(e => e.NgayTao)
+                .HasDefaultValueSql(
+                    "(sysdatetime())",
+                    "DF_ChietKhau_NgayTao");
+
+            entity.Property(e => e.NguoiCapNhatId)
+                .HasColumnName("NguoiCapNhatID");
+
+            entity.Property(e => e.NguoiTaoId)
+                .HasColumnName("NguoiTaoID");
+
+            entity.Property(e => e.PhanTramChietKhau)
+                .HasColumnType("decimal(5, 2)");
+
+            entity.Property(e => e.TenChietKhau)
+                .HasMaxLength(200);
+
             entity.Property(e => e.TrangThai)
                 .HasMaxLength(30)
                 .IsUnicode(false)
-                .HasDefaultValue("CHUA_BAT_DAU", "DF_ChietKhau_TrangThai");
+                .HasDefaultValue(
+                    "CHUA_BAT_DAU",
+                    "DF_ChietKhau_TrangThai");
 
-            entity.HasOne(d => d.GoiNap).WithMany(p => p.ChietKhaus)
-                .HasForeignKey(d => d.GoiNapId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ChietKhau_GoiNap");
+            // ChietKhau không còn phụ thuộc trực tiếp vào GoiNap.
 
-            entity.HasOne(d => d.NguoiCapNhat).WithMany(p => p.ChietKhauNguoiCapNhats)
+            entity.HasOne(d => d.NguoiCapNhat)
+                .WithMany(p => p.ChietKhauNguoiCapNhats)
                 .HasForeignKey(d => d.NguoiCapNhatId)
                 .HasConstraintName("FK_ChietKhau_NguoiCapNhat");
 
-            entity.HasOne(d => d.NguoiTao).WithMany(p => p.ChietKhauNguoiTaos)
+            entity.HasOne(d => d.NguoiTao)
+                .WithMany(p => p.ChietKhauNguoiTaos)
                 .HasForeignKey(d => d.NguoiTaoId)
                 .HasConstraintName("FK_ChietKhau_NguoiTao");
         });
+
 
         modelBuilder.Entity<DonHang>(entity =>
         {
@@ -194,15 +212,16 @@ public partial class ApplicationDbContext : DbContext
             entity.ToTable("GoiNap");
 
             entity.HasIndex(e => e.GameId, "IX_GoiNap_GameID");
-
             entity.Property(e => e.GoiNapId).HasColumnName("GoiNapID");
             entity.Property(e => e.GameId).HasColumnName("GameID");
+            entity.Property(e => e.ChietKhauId).HasColumnName("ChietKhauId");
             entity.Property(e => e.GiaGoc).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.NgayCapNhat).HasDefaultValueSql("(sysdatetime())", "DF_GoiNap_NgayCapNhat");
             entity.Property(e => e.NgayTao).HasDefaultValueSql("(sysdatetime())", "DF_GoiNap_NgayTao");
             entity.Property(e => e.NguoiCapNhatId).HasColumnName("NguoiCapNhatID");
             entity.Property(e => e.NguoiTaoId).HasColumnName("NguoiTaoID");
             entity.Property(e => e.TenGoiNap).HasMaxLength(200);
+
             entity.Property(e => e.TrangThai)
                 .HasMaxLength(30)
                 .IsUnicode(false)
@@ -220,6 +239,12 @@ public partial class ApplicationDbContext : DbContext
             entity.HasOne(d => d.NguoiTao).WithMany(p => p.GoiNapNguoiTaos)
                 .HasForeignKey(d => d.NguoiTaoId)
                 .HasConstraintName("FK_GoiNap_NguoiTao");
+
+            entity.HasOne(e => e.ChietKhau)
+                .WithMany()
+                .HasForeignKey(e => e.ChietKhauId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_GoiNap_ChietKhau");
         });
 
         modelBuilder.Entity<LichSuVi>(entity =>

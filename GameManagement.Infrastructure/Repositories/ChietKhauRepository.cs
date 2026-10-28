@@ -22,7 +22,6 @@ public class ChietKhauRepository : IChietKhauRepository
     public async Task<PagedResultDto<ChietKhau>> GetAllPagedAsync(
         int pageNumber,
         int pageSize,
-        int? goiNapId,
         string? trangThai,
         string? tuKhoa)
     {
@@ -41,15 +40,15 @@ public class ChietKhauRepository : IChietKhauRepository
         command.Parameters.Add("@PageNumber", SqlDbType.Int).Value = pageNumber;
         command.Parameters.Add("@PageSize", SqlDbType.Int).Value = pageSize;
 
-        command.Parameters.Add("@GoiNapId", SqlDbType.Int).Value =
-            goiNapId.HasValue ? goiNapId.Value : DBNull.Value;
-
         command.Parameters.Add("@TrangThai", SqlDbType.VarChar, 30).Value =
             string.IsNullOrWhiteSpace(trangThai)
                 ? DBNull.Value
                 : trangThai.Trim();
+
         command.Parameters.Add("@TuKhoa", SqlDbType.NVarChar, 100).Value =
-            string.IsNullOrWhiteSpace(tuKhoa) ? DBNull.Value : tuKhoa.Trim();
+            string.IsNullOrWhiteSpace(tuKhoa)
+                ? DBNull.Value
+                : tuKhoa.Trim();
 
         await connection.OpenAsync();
 
@@ -66,7 +65,7 @@ public class ChietKhauRepository : IChietKhauRepository
         {
             while (await reader.ReadAsync())
             {
-                var trangThaiStr = reader.GetString(6).Trim();
+                var trangThaiStr = reader.GetString(5).Trim();
 
                 if (!Enum.TryParse<ChietKhauStatus>(
                     trangThaiStr,
@@ -80,22 +79,21 @@ public class ChietKhauRepository : IChietKhauRepository
                 var chietKhau = new ChietKhau
                 {
                     ChietKhauId = reader.GetInt32(0),
-                    GoiNapId = reader.GetInt32(1),
-                    TenChietKhau = reader.GetString(2),
-                    PhanTramChietKhau = reader.GetDecimal(3),
-                    NgayBatDau = reader.GetDateTime(4),
-                    NgayKetThuc = reader.IsDBNull(5)
+                    TenChietKhau = reader.GetString(1),
+                    PhanTramChietKhau = reader.GetDecimal(2),
+                    NgayBatDau = reader.GetDateTime(3),
+                    NgayKetThuc = reader.IsDBNull(4)
                         ? null
-                        : reader.GetDateTime(5),
+                        : reader.GetDateTime(4),
                     TrangThai = trangThaiStr,
-                    NguoiTaoId = reader.IsDBNull(7)
+                    NguoiTaoId = reader.IsDBNull(6)
+                        ? null
+                        : reader.GetInt32(6),
+                    NguoiCapNhatId = reader.IsDBNull(7)
                         ? null
                         : reader.GetInt32(7),
-                    NguoiCapNhatId = reader.IsDBNull(8)
-                        ? null
-                        : reader.GetInt32(8),
-                    NgayTao = reader.GetDateTime(9),
-                    NgayCapNhat = reader.GetDateTime(10)
+                    NgayTao = reader.GetDateTime(8),
+                    NgayCapNhat = reader.GetDateTime(9)
                 };
 
                 result.Items.Add(chietKhau);
@@ -124,7 +122,7 @@ public class ChietKhauRepository : IChietKhauRepository
         if (!await reader.ReadAsync())
             return null;   // đã xóa hoặc không tồn tại: SP không trả dòng
 
-        var trangThaiStr = reader.GetString(6).Trim();
+        var trangThaiStr = reader.GetString(5).Trim();
 
         if (!Enum.TryParse<ChietKhauStatus>(trangThaiStr, ignoreCase: false, out var trangThaiEnum)
             || !Enum.IsDefined(trangThaiEnum))
@@ -135,16 +133,21 @@ public class ChietKhauRepository : IChietKhauRepository
         return new ChietKhau
         {
             ChietKhauId = reader.GetInt32(0),
-            GoiNapId = reader.GetInt32(1),
-            TenChietKhau = reader.GetString(2),
-            PhanTramChietKhau = reader.GetDecimal(3),
-            NgayBatDau = reader.GetDateTime(4),
-            NgayKetThuc = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+            TenChietKhau = reader.GetString(1),
+            PhanTramChietKhau = reader.GetDecimal(2),
+            NgayBatDau = reader.GetDateTime(3),
+            NgayKetThuc = reader.IsDBNull(4)
+                 ? null
+                 : reader.GetDateTime(4),
             TrangThai = trangThaiStr,
-            NguoiTaoId = reader.IsDBNull(7) ? null : reader.GetInt32(7),
-            NguoiCapNhatId = reader.IsDBNull(8) ? null : reader.GetInt32(8),
-            NgayTao = reader.GetDateTime(9),
-            NgayCapNhat = reader.GetDateTime(10)
+            NguoiTaoId = reader.IsDBNull(6)
+                 ? null
+                 : reader.GetInt32(6),
+            NguoiCapNhatId = reader.IsDBNull(7)
+                 ? null
+                 : reader.GetInt32(7),
+            NgayTao = reader.GetDateTime(8),
+            NgayCapNhat = reader.GetDateTime(9)
         };
     }
     public async Task<ChietKhau> CreateAsync(ChietKhau chietKhau)
@@ -159,10 +162,7 @@ public class ChietKhauRepository : IChietKhauRepository
 
             command.CommandType = CommandType.StoredProcedure;
 
-            command.Parameters.Add("@GoiNapId", SqlDbType.Int)
-                .Value = chietKhau.GoiNapId;
-
-            command.Parameters.Add("@TenChietKhau", SqlDbType.NVarChar, 100)
+            command.Parameters.Add("@TenChietKhau", SqlDbType.NVarChar, 200)
                 .Value = chietKhau.TenChietKhau;
 
             var phanTramParameter = command.Parameters.Add(
@@ -198,7 +198,7 @@ public class ChietKhauRepository : IChietKhauRepository
                     "Không nhận được dữ liệu chiết khấu sau khi tạo.");
             }
 
-            var trangThaiStr = reader.GetString(6).Trim();
+            var trangThaiStr = reader.GetString(5).Trim();
 
             if (!Enum.TryParse<ChietKhauStatus>(
                     trangThaiStr,
@@ -213,22 +213,21 @@ public class ChietKhauRepository : IChietKhauRepository
             return new ChietKhau
             {
                 ChietKhauId = reader.GetInt32(0),
-                GoiNapId = reader.GetInt32(1),
-                TenChietKhau = reader.GetString(2),
-                PhanTramChietKhau = reader.GetDecimal(3),
-                NgayBatDau = reader.GetDateTime(4),
-                NgayKetThuc = reader.IsDBNull(5)
+                TenChietKhau = reader.GetString(1),
+                PhanTramChietKhau = reader.GetDecimal(2),
+                NgayBatDau = reader.GetDateTime(3),
+                NgayKetThuc = reader.IsDBNull(4)
                     ? null
-                    : reader.GetDateTime(5),
+                    : reader.GetDateTime(4),
                 TrangThai = trangThaiStr,
-                NguoiTaoId = reader.IsDBNull(7)
+                NguoiTaoId = reader.IsDBNull(6)
+                    ? null
+                    : reader.GetInt32(6),
+                NguoiCapNhatId = reader.IsDBNull(7)
                     ? null
                     : reader.GetInt32(7),
-                NguoiCapNhatId = reader.IsDBNull(8)
-                    ? null
-                    : reader.GetInt32(8),
-                NgayTao = reader.GetDateTime(9),
-                NgayCapNhat = reader.GetDateTime(10)
+                NgayTao = reader.GetDateTime(8),
+                NgayCapNhat = reader.GetDateTime(9)
             };
         }
         catch (SqlException ex) when (ex.Number is >= 50211 and <= 50244)
@@ -261,7 +260,7 @@ public class ChietKhauRepository : IChietKhauRepository
             command.Parameters.Add("@ChietKhauId", SqlDbType.Int)
                 .Value = chietKhauId;
 
-            command.Parameters.Add("@TenChietKhau", SqlDbType.NVarChar, 100)
+            command.Parameters.Add("@TenChietKhau", SqlDbType.NVarChar, 200)
                 .Value = chietKhau.TenChietKhau;
 
             var phanTramParameter = command.Parameters.Add(
@@ -289,7 +288,7 @@ public class ChietKhauRepository : IChietKhauRepository
             if (!await reader.ReadAsync())
                 return null;
 
-            var trangThaiStr = reader.GetString(6).Trim();
+            var trangThaiStr = reader.GetString(5).Trim();
 
             if (!Enum.TryParse<ChietKhauStatus>(
                     trangThaiStr,
@@ -304,22 +303,21 @@ public class ChietKhauRepository : IChietKhauRepository
             return new ChietKhau
             {
                 ChietKhauId = reader.GetInt32(0),
-                GoiNapId = reader.GetInt32(1),
-                TenChietKhau = reader.GetString(2),
-                PhanTramChietKhau = reader.GetDecimal(3),
-                NgayBatDau = reader.GetDateTime(4),
-                NgayKetThuc = reader.IsDBNull(5)
+                TenChietKhau = reader.GetString(1),
+                PhanTramChietKhau = reader.GetDecimal(2),
+                NgayBatDau = reader.GetDateTime(3),
+                NgayKetThuc = reader.IsDBNull(4)
                     ? null
-                    : reader.GetDateTime(5),
+                    : reader.GetDateTime(4),
                 TrangThai = trangThaiStr,
-                NguoiTaoId = reader.IsDBNull(7)
+                NguoiTaoId = reader.IsDBNull(6)
+                    ? null
+                    : reader.GetInt32(6),
+                NguoiCapNhatId = reader.IsDBNull(7)
                     ? null
                     : reader.GetInt32(7),
-                NguoiCapNhatId = reader.IsDBNull(8)
-                    ? null
-                    : reader.GetInt32(8),
-                NgayTao = reader.GetDateTime(9),
-                NgayCapNhat = reader.GetDateTime(10)
+                NgayTao = reader.GetDateTime(8),
+                NgayCapNhat = reader.GetDateTime(9)
             };
         }
         catch (SqlException ex) when (ex.Number is >= 50211 and <= 50244)

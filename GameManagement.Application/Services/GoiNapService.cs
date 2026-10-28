@@ -65,6 +65,7 @@ namespace GameManagement.Application.Services
                 {
                     GoiNapId = x.GoiNapId,
                     GameId = x.GameId,
+                    ChietKhauId = x.ChietKhauId,
                     TenGoiNap = x.TenGoiNap,
                     GiaGoc = x.GiaGoc,
                     TrangThai = x.TrangThai,
@@ -104,6 +105,7 @@ namespace GameManagement.Application.Services
             {
                 GoiNapId = goiNap.GoiNapId,
                 GameId = goiNap.GameId,
+                ChietKhauId = goiNap.ChietKhauId,
                 TenGoiNap = goiNap.TenGoiNap,
                 GiaGoc = goiNap.GiaGoc,
                 TrangThai = goiNap.TrangThai,
@@ -145,11 +147,12 @@ namespace GameManagement.Application.Services
             var goiNap = new GoiNap
             {
                 GameId = dto.GameId,
+                ChietKhauId = dto.ChietKhauId,
                 TenGoiNap = dto.TenGoiNap,
                 GiaGoc = dto.GiaGoc,
-                TrangThai = GoiNapStatus.HOAT_DONG, // Gói nạp mới tạo mặc định ở trạng thái HOAT_DONG
-                NguoiTaoId = _currentUserService.AccountId, // Lấy ID tài khoản Admin đang thực hiện từ JWT
-                NgayTao = DateTime.UtcNow                  // Ghi nhận thời gian tạo theo giờ chuẩn UTC
+                TrangThai = GoiNapStatus.HOAT_DONG,
+                NguoiTaoId = _currentUserService.AccountId,
+                NgayTao = DateTime.UtcNow
             };
 
             // 5. Gọi Repository để thêm mới bản ghi vào Database
@@ -160,6 +163,7 @@ namespace GameManagement.Application.Services
             {
                 GoiNapId = createdGoiNap.GoiNapId,
                 GameId = createdGoiNap.GameId,
+                ChietKhauId = createdGoiNap.ChietKhauId,
                 TenGoiNap = createdGoiNap.TenGoiNap,
                 GiaGoc = createdGoiNap.GiaGoc,
                 TrangThai = createdGoiNap.TrangThai,
@@ -204,6 +208,7 @@ namespace GameManagement.Application.Services
             // 5. Cập nhật các thông tin mới từ DTO vào Entity
             goiNap.TenGoiNap = dto.TenGoiNap;
             goiNap.GiaGoc = dto.GiaGoc;
+            goiNap.ChietKhauId = dto.ChietKhauId;
             goiNap.TrangThai = dto.TrangThai;
 
             // 6. Ghi vết hệ thống (Audit field): Ai sửa và sửa khi nào
@@ -218,6 +223,7 @@ namespace GameManagement.Application.Services
             {
                 GoiNapId = updateGoiNap.GoiNapId,
                 GameId = updateGoiNap.GameId,
+                ChietKhauId = updateGoiNap.ChietKhauId,
                 TenGoiNap = updateGoiNap.TenGoiNap,
                 GiaGoc = updateGoiNap.GiaGoc,
                 TrangThai = updateGoiNap.TrangThai,
@@ -258,6 +264,7 @@ namespace GameManagement.Application.Services
             {
                 GoiNapId = updatedGoiNap.GoiNapId,
                 GameId = updatedGoiNap.GameId,
+                ChietKhauId = updatedGoiNap.ChietKhauId,
                 TenGoiNap = updatedGoiNap.TenGoiNap,
                 GiaGoc = updatedGoiNap.GiaGoc,
                 TrangThai = updatedGoiNap.TrangThai,
@@ -279,10 +286,7 @@ namespace GameManagement.Application.Services
             if (goiNap == null)
                 return false;
 
-            return await _goiNapRepository.DeleteAsync(
-                id,
-                _currentUserService.AccountId);
+            return await _goiNapRepository.DeleteAsync(id,_currentUserService.AccountId);
         }
-
     }
 }

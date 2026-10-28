@@ -1,4 +1,5 @@
-﻿using GameManagement.Application.DTOs;
+﻿
+using GameManagement.Application.DTOs;
 using GameManagement.Application.Exceptions;
 using GameManagement.Application.Interfaces;
 using GameManagement.Application.Repositories;
@@ -19,18 +20,16 @@ public class ChietKhauService : IChietKhauService
     public async Task<PagedResultDto<ChietKhauDto>> GetAllPagedAsync(
         int pageNumber,
         int pageSize,
-        int? goiNapId,
         string? trangThai,
         string? tuKhoa)
     {
         if (pageNumber < 1)
-            throw new ArgumentException("Số trang phải lớn hơn hoặc bằng 1.");
+            throw new ArgumentException(
+                "Số trang phải lớn hơn hoặc bằng 1.");
 
         if (pageSize < 1 || pageSize > 100)
-            throw new ArgumentException("Số bản ghi mỗi trang phải từ 1 đến 100.");
-
-        if (goiNapId.HasValue && goiNapId.Value <= 0)
-            throw new ArgumentException("Mã gói nạp phải lớn hơn 0.");
+            throw new ArgumentException(
+                "Số bản ghi mỗi trang phải từ 1 đến 100.");
 
         if (!string.IsNullOrWhiteSpace(trangThai))
         {
@@ -40,19 +39,23 @@ public class ChietKhauService : IChietKhauService
                     out var status)
                 || !Enum.IsDefined(status))
             {
-                throw new ArgumentException("Trạng thái chiết khấu không hợp lệ.");
+                throw new ArgumentException(
+                    "Trạng thái chiết khấu không hợp lệ.");
             }
 
             trangThai = status.ToString();
         }
 
-        if (!string.IsNullOrWhiteSpace(tuKhoa) && tuKhoa.Trim().Length > 100)
-            throw new ArgumentException("Từ khóa không được dài quá 100 ký tự.");
+        if (!string.IsNullOrWhiteSpace(tuKhoa)
+            && tuKhoa.Trim().Length > 100)
+        {
+            throw new ArgumentException(
+                "Từ khóa không được dài quá 100 ký tự.");
+        }
 
         var data = await _chietKhauRepository.GetAllPagedAsync(
             pageNumber,
             pageSize,
-            goiNapId,
             trangThai,
             tuKhoa);
 
@@ -73,13 +76,13 @@ public class ChietKhauService : IChietKhauService
                 || !Enum.IsDefined(status))
             {
                 throw new InvalidOperationException(
-                    $"Trạng thái chiết khấu '{item.TrangThai}' trong database không hợp lệ.");
+                    $"Trạng thái chiết khấu '{item.TrangThai}' " +
+                    "trong database không hợp lệ.");
             }
 
             result.Items.Add(new ChietKhauDto
             {
                 ChietKhauId = item.ChietKhauId,
-                GoiNapId = item.GoiNapId,
                 TenChietKhau = item.TenChietKhau,
                 PhanTramChietKhau = item.PhanTramChietKhau,
                 NgayBatDau = item.NgayBatDau,
@@ -92,25 +95,32 @@ public class ChietKhauService : IChietKhauService
 
         return result;
     }
+
     public async Task<ChietKhauDto?> GetByIdAsync(int chietKhauId)
     {
         if (chietKhauId <= 0)
-            throw new ArgumentException("Mã chiết khấu không hợp lệ.");
+            throw new ArgumentException(
+                "Mã chiết khấu không hợp lệ.");
 
         var item = await _chietKhauRepository.GetByIdAsync(chietKhauId);
+
         if (item == null)
             return null;
 
-        if (!Enum.TryParse<ChietKhauStatus>(item.TrangThai, out var status))
+        if (!Enum.TryParse<ChietKhauStatus>(
+                item.TrangThai,
+                ignoreCase: false,
+                out var status)
+            || !Enum.IsDefined(status))
         {
             throw new ChietKhauException(
-                "Trạng thái chiết khấu trong cơ sở dữ liệu không hợp lệ.", 500);
+                "Trạng thái chiết khấu trong cơ sở dữ liệu không hợp lệ.",
+                500);
         }
 
         return new ChietKhauDto
         {
             ChietKhauId = item.ChietKhauId,
-            GoiNapId = item.GoiNapId,
             TenChietKhau = item.TenChietKhau,
             PhanTramChietKhau = item.PhanTramChietKhau,
             NgayBatDau = item.NgayBatDau,
@@ -126,28 +136,30 @@ public class ChietKhauService : IChietKhauService
         int nguoiTaoId)
     {
         if (nguoiTaoId <= 0)
-            throw new ArgumentException("Mã người tạo không hợp lệ.");
-
-        if (dto.GoiNapId <= 0)
-            throw new ArgumentException("Mã gói nạp phải lớn hơn 0.");
+            throw new ArgumentException(
+                "Mã người tạo không hợp lệ.");
 
         if (string.IsNullOrWhiteSpace(dto.TenChietKhau))
-            throw new ArgumentException("Tên chiết khấu không được để trống.");
-
-        if (dto.PhanTramChietKhau <= 0 || dto.PhanTramChietKhau > 100)
             throw new ArgumentException(
-                "Phần trăm chiết khấu phải lớn hơn 0 và không vượt quá 100.");
+                "Tên chiết khấu không được để trống.");
 
-        if (dto.NgayKetThuc.HasValue &&
-            dto.NgayKetThuc.Value <= dto.NgayBatDau)
+        if (dto.PhanTramChietKhau <= 0
+            || dto.PhanTramChietKhau > 100)
+        {
+            throw new ArgumentException(
+                "Phần trăm chiết khấu phải lớn hơn 0 " +
+                "và không vượt quá 100.");
+        }
+
+        if (dto.NgayKetThuc.HasValue
+            && dto.NgayKetThuc.Value <= dto.NgayBatDau)
         {
             throw new ArgumentException(
                 "Ngày kết thúc phải sau ngày bắt đầu.");
         }
 
-        var chietKhau = new GameManagement.Domain.Entities.ChietKhau
+        var chietKhau = new ChietKhau
         {
-            GoiNapId = dto.GoiNapId,
             TenChietKhau = dto.TenChietKhau.Trim(),
             PhanTramChietKhau = dto.PhanTramChietKhau,
             NgayBatDau = dto.NgayBatDau,
@@ -156,7 +168,12 @@ public class ChietKhauService : IChietKhauService
         };
 
         var created = await _chietKhauRepository.CreateAsync(chietKhau);
-        if (!Enum.TryParse<ChietKhauStatus>(created.TrangThai, out var trangThai))
+
+        if (!Enum.TryParse<ChietKhauStatus>(
+                created.TrangThai,
+                ignoreCase: false,
+                out var trangThai)
+            || !Enum.IsDefined(trangThai))
         {
             throw new ChietKhauException(
                 "Trạng thái chiết khấu trong cơ sở dữ liệu không hợp lệ.",
@@ -166,12 +183,11 @@ public class ChietKhauService : IChietKhauService
         return new ChietKhauDto
         {
             ChietKhauId = created.ChietKhauId,
-            GoiNapId = created.GoiNapId,
             TenChietKhau = created.TenChietKhau,
             PhanTramChietKhau = created.PhanTramChietKhau,
             NgayBatDau = created.NgayBatDau,
             NgayKetThuc = created.NgayKetThuc,
-            TrangThai =trangThai,
+            TrangThai = trangThai,
             NgayTao = created.NgayTao,
             NgayCapNhat = created.NgayCapNhat
         };
@@ -183,20 +199,27 @@ public class ChietKhauService : IChietKhauService
         int nguoiCapNhatId)
     {
         if (chietKhauId <= 0)
-            throw new ChietKhauException("ID chiết khấu không hợp lệ.");
+            throw new ChietKhauException(
+                "ID chiết khấu không hợp lệ.");
 
         if (nguoiCapNhatId <= 0)
-            throw new ChietKhauException("Người cập nhật không hợp lệ.");
+            throw new ChietKhauException(
+                "Người cập nhật không hợp lệ.");
 
         if (string.IsNullOrWhiteSpace(dto.TenChietKhau))
-            throw new ChietKhauException("Tên chiết khấu không được để trống.");
-
-        if (dto.PhanTramChietKhau <= 0 || dto.PhanTramChietKhau > 100)
             throw new ChietKhauException(
-                "Phần trăm chiết khấu phải lớn hơn 0 và không vượt quá 100.");
+                "Tên chiết khấu không được để trống.");
 
-        if (dto.NgayKetThuc.HasValue &&
-            dto.NgayKetThuc.Value <= dto.NgayBatDau)
+        if (dto.PhanTramChietKhau <= 0
+            || dto.PhanTramChietKhau > 100)
+        {
+            throw new ChietKhauException(
+                "Phần trăm chiết khấu phải lớn hơn 0 " +
+                "và không vượt quá 100.");
+        }
+
+        if (dto.NgayKetThuc.HasValue
+            && dto.NgayKetThuc.Value <= dto.NgayBatDau)
         {
             throw new ChietKhauException(
                 "Ngày kết thúc phải lớn hơn ngày bắt đầu.");
@@ -220,7 +243,9 @@ public class ChietKhauService : IChietKhauService
 
         if (!Enum.TryParse<ChietKhauStatus>(
                 updated.TrangThai,
-                out var trangThai))
+                ignoreCase: false,
+                out var trangThai)
+            || !Enum.IsDefined(trangThai))
         {
             throw new ChietKhauException(
                 "Trạng thái chiết khấu trong cơ sở dữ liệu không hợp lệ.",
@@ -230,7 +255,6 @@ public class ChietKhauService : IChietKhauService
         return new ChietKhauDto
         {
             ChietKhauId = updated.ChietKhauId,
-            GoiNapId = updated.GoiNapId,
             TenChietKhau = updated.TenChietKhau,
             PhanTramChietKhau = updated.PhanTramChietKhau,
             NgayBatDau = updated.NgayBatDau,
@@ -241,17 +265,20 @@ public class ChietKhauService : IChietKhauService
         };
     }
 
-    public async Task DeleteAsync(int chietKhauId, int nguoiCapNhatId)
+    public async Task DeleteAsync(
+        int chietKhauId,
+        int nguoiCapNhatId)
     {
         if (chietKhauId <= 0)
-            throw new ChietKhauException("Mã chiết khấu không hợp lệ.");
+            throw new ChietKhauException(
+                "Mã chiết khấu không hợp lệ.");
 
         if (nguoiCapNhatId <= 0)
-            throw new ChietKhauException("Người cập nhật không hợp lệ.");
+            throw new ChietKhauException(
+                "Người cập nhật không hợp lệ.");
 
         await _chietKhauRepository.DeleteAsync(
             chietKhauId,
             nguoiCapNhatId);
     }
-
 }

@@ -8,8 +8,6 @@ public class ChietKhauDto
 {
     public int ChietKhauId { get; set; }
 
-    public int GoiNapId { get; set; }
-
     public string TenChietKhau { get; set; } = string.Empty;
 
     public decimal PhanTramChietKhau { get; set; }
@@ -27,12 +25,8 @@ public class ChietKhauDto
 
 public class CreateChietKhauDto
 {
-    [Required(ErrorMessage = "Vui lòng nhập mã gói nạp.")]
-    [Range(1, int.MaxValue, ErrorMessage = "Mã gói nạp phải lớn hơn 0.")]
-    public int GoiNapId { get; set; }
-
     [Required(ErrorMessage = "Vui lòng nhập tên chiết khấu.")]
-    [StringLength(100, ErrorMessage = "Tên chiết khấu không được vượt quá 100 ký tự.")]
+    [StringLength(100, ErrorMessage = "Tên chiết khấu không được vượt quá 200 ký tự.")]
     public string TenChietKhau { get; set; } = string.Empty;
 
     [Range(typeof(decimal), "0.01", "100",
@@ -47,7 +41,7 @@ public class CreateChietKhauDto
 public class UpdateChietKhauDto
 {
     [Required(ErrorMessage = "Vui lòng nhập tên chiết khấu.")]
-    [StringLength(100, ErrorMessage = "Tên chiết khấu không được vượt quá 100 ký tự.")]
+    [StringLength(100, ErrorMessage = "Tên chiết khấu không được vượt quá 200 ký tự.")]
     public string TenChietKhau { get; set; } = string.Empty;
 
     [Range(typeof(decimal), "0.01", "100",

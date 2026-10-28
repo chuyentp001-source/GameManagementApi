@@ -113,38 +113,48 @@ public class GoiNapRepository : IGoiNapRepository
 
     public async Task<GoiNap> CreateAsync(GoiNap goiNap)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.OpenAsync();
-
-        using var command = new SqlCommand(
-            "dbo.sp_GoiNap_Create", connection);
-
-        command.CommandType = CommandType.StoredProcedure;
-
-        command.Parameters.Add("@GameId", SqlDbType.Int)
-            .Value = goiNap.GameId;
-
-        command.Parameters.Add("@TenGoiNap", SqlDbType.NVarChar, 200)
-            .Value = goiNap.TenGoiNap;
-
-        command.Parameters.Add("@GiaGoc", SqlDbType.Decimal)
-            .Value = goiNap.GiaGoc;
-
-        command.Parameters["@GiaGoc"].Precision = 18;
-        command.Parameters["@GiaGoc"].Scale = 2;
-
-        command.Parameters.Add("@NguoiTaoId", SqlDbType.Int)
-            .Value = (object?)goiNap.NguoiTaoId ?? DBNull.Value;
-
-        using var reader = await command.ExecuteReaderAsync();
-
-        if (!await reader.ReadAsync())
+        try
         {
-            throw new InvalidOperationException(
-                "Không thể tạo gói nạp.");
-        }
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
 
-        return MapGoiNap(reader);
+            using var command = new SqlCommand(
+                "dbo.sp_GoiNap_Create", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@GameId", SqlDbType.Int)
+                .Value = goiNap.GameId;
+
+            command.Parameters.Add("@TenGoiNap", SqlDbType.NVarChar, 200)
+                .Value = goiNap.TenGoiNap;
+
+            command.Parameters.Add("@GiaGoc", SqlDbType.Decimal)
+                .Value = goiNap.GiaGoc;
+
+            command.Parameters["@GiaGoc"].Precision = 18;
+            command.Parameters["@GiaGoc"].Scale = 2;
+
+            command.Parameters.Add("@NguoiTaoId", SqlDbType.Int)
+                .Value = (object?)goiNap.NguoiTaoId ?? DBNull.Value;
+
+            command.Parameters.Add("@ChietKhauId", SqlDbType.Int)
+                .Value = (object?)goiNap.ChietKhauId ?? DBNull.Value;
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                throw new InvalidOperationException(
+                    "Không thể tạo gói nạp.");
+            }
+
+            return MapGoiNap(reader);
+        }
+        catch (SqlException ex) when (ex.Number == 50302)
+        {
+            throw new InvalidGoiNapException(ex.Message);
+        }
     }
 
     public async Task<GoiNap> UpdateAsync(GoiNap goiNap)
@@ -178,6 +188,9 @@ public class GoiNapRepository : IGoiNapRepository
 
         command.Parameters.Add("@NguoiCapNhatId", SqlDbType.Int)
             .Value = (object?)goiNap.NguoiCapNhatId ?? DBNull.Value;
+
+        command.Parameters.Add("@ChietKhauId", SqlDbType.Int)
+            .Value = (object?)goiNap.ChietKhauId ?? DBNull.Value;
 
         using var reader = await command.ExecuteReaderAsync();
 
@@ -223,6 +236,11 @@ public class GoiNapRepository : IGoiNapRepository
         {
             GoiNapId = reader.GetInt32(reader.GetOrdinal("GoiNapId")),
             GameId = reader.GetInt32(reader.GetOrdinal("GameId")),
+
+            ChietKhauId = reader.IsDBNull(reader.GetOrdinal("ChietKhauId"))
+            ? null
+            : reader.GetInt32(reader.GetOrdinal("ChietKhauId")),
+
             TenGoiNap = reader.GetString(reader.GetOrdinal("TenGoiNap")),
             GiaGoc = reader.GetDecimal(reader.GetOrdinal("GiaGoc")),
 
@@ -240,15 +258,15 @@ public class GoiNapRepository : IGoiNapRepository
             NgayTao = reader.GetDateTime(reader.GetOrdinal("NgayTao")),
             NgayCapNhat = reader.GetDateTime(reader.GetOrdinal("NgayCapNhat")),
 
-             Game = new Game
-             {
-                 GameId = reader.GetInt32(reader.GetOrdinal("GameId")),
-                 CoServer = reader.GetBoolean(reader.GetOrdinal("CoServer"))
-             }
+            Game = new Game
+            {
+                GameId = reader.GetInt32(reader.GetOrdinal("GameId")),
+                CoServer = reader.GetBoolean(reader.GetOrdinal("CoServer"))
+            }
         };
     }
 
-    public async Task<bool> IsDuplicateNameAsync(int gameId,string tenGoiNap,int? goiNapId = null)
+    public async Task<bool> IsDuplicateNameAsync(int gameId, string tenGoiNap, int? goiNapId = null)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.OpenAsync();

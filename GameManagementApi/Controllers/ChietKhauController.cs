@@ -24,36 +24,39 @@ public class ChietKhauController : ControllerBase
     [Authorize(Roles = "ADMIN")]
     [SwaggerOperation(
         Summary = "LẤY DANH SÁCH CHIẾT KHẤU/ADMIN",
-        Description = "Lấy danh sách chiết khấu có phân trang, hỗ trợ lọc theo gói nạp và trạng thái."
+        Description = "Lấy danh sách chiết khấu có phân trang, lọc theo trạng thái và từ khóa."
     )]
     public async Task<IActionResult> GetAllPaged(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
-        [FromQuery] int? goiNapId = null,
         [FromQuery] ChietKhauStatus? trangThai = null,
         [FromQuery] string? tuKhoa = null)
     {
         var result = await _chietKhauService.GetAllPagedAsync(
             pageNumber,
             pageSize,
-            goiNapId,
             trangThai?.ToString(),
             tuKhoa);
 
         return Ok(result);
     }
+
     [HttpGet("{id:int}")]
     [Authorize(Roles = "ADMIN")]
     [SwaggerOperation(
-    Summary = "LẤY CHI TIẾT CHIẾT KHẤU/ADMIN",
-    Description = "Lấy chi tiết một chương trình chiết khấu theo mã.")]
+        Summary = "LẤY CHI TIẾT CHIẾT KHẤU/ADMIN",
+        Description = "Lấy chi tiết một chương trình chiết khấu theo mã."
+    )]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _chietKhauService.GetByIdAsync(id);
 
         if (result == null)
         {
-            return NotFound(new { message = "Không tìm thấy chiết khấu." });
+            return NotFound(new
+            {
+                message = "Không tìm thấy chiết khấu."
+            });
         }
 
         return Ok(result);
@@ -63,7 +66,7 @@ public class ChietKhauController : ControllerBase
     [Authorize(Roles = "ADMIN")]
     [SwaggerOperation(
         Summary = "TẠO CHƯƠNG TRÌNH CHIẾT KHẤU/ADMIN",
-        Description = "Tạo chương trình chiết khấu mới cho một gói nạp."
+        Description = "Tạo chương trình chiết khấu độc lập để có thể gán cho nhiều gói nạp."
     )]
     public async Task<IActionResult> Create(
         [FromBody] CreateChietKhauDto dto)
@@ -72,34 +75,34 @@ public class ChietKhauController : ControllerBase
             ClaimTypes.NameIdentifier);
 
         if (!int.TryParse(accountIdClaim, out var accountId))
+        {
             return Unauthorized();
+        }
 
         var result = await _chietKhauService.CreateAsync(
             dto,
             accountId);
 
         return CreatedAtAction(
-         nameof(GetById),
-         new { id = result.ChietKhauId },
-         result);
+            nameof(GetById),
+            new { id = result.ChietKhauId },
+            result);
     }
-
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = "ADMIN")]
     [SwaggerOperation(
-        Summary = "CẬP NHẬT CHIẾT KHẤU/ADMIM",
-        Description = "Sửa Lại chiết khấu đã tồn tại."
+        Summary = "CẬP NHẬT CHIẾT KHẤU/ADMIN",
+        Description = "Cập nhật thông tin chương trình chiết khấu."
     )]
     public async Task<IActionResult> Update(
         int id,
         [FromBody] UpdateChietKhauDto dto)
     {
-        var accountIdClaim = User.FindFirst(
-            System.Security.Claims.ClaimTypes.NameIdentifier);
+        var accountIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
 
-        if (accountIdClaim == null ||
-            !int.TryParse(accountIdClaim.Value, out var accountId))
+        if (!int.TryParse(accountIdClaim, out var accountId))
         {
             return Unauthorized();
         }
@@ -123,15 +126,15 @@ public class ChietKhauController : ControllerBase
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "ADMIN")]
     [SwaggerOperation(
-        Summary = "XÓA CHIẾT KHẤU/ADMIM",
-        Description = "Sử dụng để xóa mềm.")]
+        Summary = "XÓA CHIẾT KHẤU/ADMIN",
+        Description = "Xóa mềm chương trình chiết khấu."
+    )]
     public async Task<IActionResult> Delete(int id)
     {
-        var accountIdClaim = User.FindFirst(
-            System.Security.Claims.ClaimTypes.NameIdentifier);
+        var accountIdClaim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
 
-        if (accountIdClaim == null ||
-            !int.TryParse(accountIdClaim.Value, out var accountId))
+        if (!int.TryParse(accountIdClaim, out var accountId))
         {
             return Unauthorized();
         }
@@ -143,5 +146,4 @@ public class ChietKhauController : ControllerBase
             message = "Xóa chiết khấu thành công."
         });
     }
-
 }
