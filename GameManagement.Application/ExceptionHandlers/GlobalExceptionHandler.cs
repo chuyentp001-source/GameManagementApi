@@ -54,6 +54,11 @@ public class GlobalExceptionHandler
                 message = ex.Message;
                 break;
 
+            case KeyNotFoundException ex:
+                statusCode = StatusCodes.Status404NotFound;
+                message = ex.Message;
+                break;
+
             case GoiNapNotFoundException ex:
                 statusCode = StatusCodes.Status404NotFound;
                 message = ex.Message;
@@ -73,34 +78,42 @@ public class GlobalExceptionHandler
                 statusCode = StatusCodes.Status400BadRequest;
                 message = ex.Message;
                 break;
+
             case ArgumentException ex:
                 statusCode = StatusCodes.Status400BadRequest;
                 message = ex.Message;
                 break;
+
             case InvalidOperationException ex:
                 statusCode = StatusCodes.Status400BadRequest;
                 message = ex.Message;
                 break;
+
             case ThanhToanException ex:
                 statusCode = ex.StatusCode;
                 message = ex.Message;
                 break;
+
             case DonHangException ex:
                 statusCode = ex.StatusCode;
                 message = ex.Message;
                 break;
+
             case TaoDonHangException ex:
                 statusCode = ex.StatusCode;
                 message = ex.Message;
                 break;
+
             case UserException ex:
                 statusCode = ex.StatusCode;
                 message = ex.Message;
                 break;
+
             case ChietKhauException ex:
                 statusCode = ex.StatusCode;
                 message = ex.Message;
                 break;
+
             default:
                 statusCode = StatusCodes.Status500InternalServerError;
                 message = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";

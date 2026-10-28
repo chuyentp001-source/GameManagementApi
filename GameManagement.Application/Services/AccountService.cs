@@ -266,38 +266,51 @@ public class AccountService : IAccountService
 
     public async Task ChangePasswordAsync(int accountId, ChangePasswordDto dto)
     {
-        // 1. Kiểm tra mật khẩu mới và xác nhận mật khẩu khớp nhau
+        // 1. Kiểm tra mật khẩu mới và xác nhận mật khẩu
         if (dto.MatKhauMoi != dto.XacNhanMatKhauMoi)
         {
-            throw new Exception("Mật khẩu mới và xác nhận mật khẩu không khớp.");
-        }
-        if (string.IsNullOrWhiteSpace(dto.MatKhauMoi)
-                || dto.MatKhauMoi.Length < 8
-                || dto.MatKhauMoi.Length > 72)
-        {
-            throw new ArgumentException("Mật khẩu mới phải có từ 8 đến 72 ký tự.");
+            throw new ArgumentException(
+                "Mật khẩu mới và xác nhận mật khẩu không khớp.");
         }
 
-        // 2. Lấy thông tin tài khoản từ DB để kiểm tra mật khẩu hiện tại
+        if (string.IsNullOrWhiteSpace(dto.MatKhauMoi)
+            || dto.MatKhauMoi.Length < 8
+            || dto.MatKhauMoi.Length > 72)
+        {
+            throw new ArgumentException(
+                "Mật khẩu mới phải có từ 8 đến 72 ký tự.");
+        }
+
+        // 2. Lấy tài khoản từ database
         var account = await _accountRepository.GetByIdAsync(accountId);
+
         if (account == null)
         {
-            throw new Exception("Không tìm thấy thông tin tài khoản.");
+            throw new KeyNotFoundException(
+                "Không tìm thấy thông tin tài khoản.");
         }
 
-        // 3. Kiểm tra mật khẩu cũ (dùng !isOldPasswordValid để báo lỗi khi SAI)
-        bool isOldPasswordValid = BCrypt.Net.BCrypt.Verify(dto.MatKhauCu, account.MatKhau);
+        // 3. Kiểm tra mật khẩu hiện tại
+        bool isOldPasswordValid = BCrypt.Net.BCrypt.Verify(
+            dto.MatKhauCu,
+            account.MatKhau);
+
         if (!isOldPasswordValid)
         {
-            throw new Exception("Mật khẩu hiện tại không chính xác.");
+            throw new ArgumentException(
+                "Mật khẩu hiện tại không chính xác.");
         }
 
         // 4. Hash mật khẩu mới
-        string newPasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.MatKhauMoi);
+        string newPasswordHash =
+            BCrypt.Net.BCrypt.HashPassword(dto.MatKhauMoi);
 
-        // 5. Cập nhật mật khẩu mới xuống DB qua Repository
-        await _accountRepository.UpdatePasswordAsync(accountId, newPasswordHash);
+        // 5. Cập nhật mật khẩu đã hash xuống database
+        await _accountRepository.UpdatePasswordAsync(
+            accountId,
+            newPasswordHash);
     }
+
 
     public async Task<AccountDto?> UpdateStatusAsync(int accountId, ChangeAccountStatusDto dto)
     {

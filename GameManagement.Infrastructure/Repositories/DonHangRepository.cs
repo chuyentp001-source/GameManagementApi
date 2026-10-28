@@ -5,7 +5,6 @@ using GameManagement.Domain.Entities;
 using GameManagement.Domain.Enums;
 using GameManagement.Infrastructure.Data;
 using Microsoft.Data.SqlClient;
-using Microsoft.Identity.Client;
 using System.Data;
 
 namespace GameManagement.Infrastructure.Repositories;

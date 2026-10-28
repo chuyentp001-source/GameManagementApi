@@ -83,7 +83,7 @@ public class UserController : ControllerBase
 
     // Người dùng xem hồ sơ của chính mình
     [HttpGet("me")]
-    [Authorize(Roles = "USER,ADMIN")]
+    [Authorize(Roles = "USER,ADMIN,CSKH")]
     [SwaggerOperation(
         Summary = "XEM HỒ SƠ CỦA TÔI",
         Description = "Lấy hồ sơ gắn với tài khoản đang đăng nhập.")]

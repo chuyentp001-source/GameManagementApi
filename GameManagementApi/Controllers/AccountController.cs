@@ -5,6 +5,7 @@ using GameManagement.Application.Interfaces;
 using GameManagement.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
 
@@ -106,6 +107,7 @@ public class AccountController : ControllerBase
 
     // Khách đăng ký tài khoản
     [HttpPost("register")]
+    [EnableRateLimiting("LoginPolicy")]
     [SwaggerOperation(
         Summary = "ĐĂNG KÝ TÀI KHOẢN",
         Description = "Đăng ký tài khoản mới.")]
@@ -163,6 +165,7 @@ public class AccountController : ControllerBase
 
     // Đăng nhập
     [HttpPost("login")]
+    [EnableRateLimiting("LoginPolicy")]
     [AllowAnonymous]
     [SwaggerOperation(
         Summary = "ĐĂNG NHẬP",
