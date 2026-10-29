@@ -107,7 +107,7 @@ public class AccountController : ControllerBase
 
     // Khách đăng ký tài khoản
     [HttpPost("register")]
-    [EnableRateLimiting("LoginPolicy")]
+    [EnableRateLimiting("RegisterPolicy")]
     [SwaggerOperation(
         Summary = "ĐĂNG KÝ TÀI KHOẢN",
         Description = "Đăng ký tài khoản mới.")]

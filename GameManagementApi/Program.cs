@@ -19,6 +19,15 @@ using System.Threading.RateLimiting;
 // Tạo builder để cấu hình dịch vụ và thiết lập ứng dụng ASP.NET Core.
 var builder = WebApplication.CreateBuilder(args);
 
+// CORS: chỉ cho phép các origin frontend được khai báo trong cấu hình.
+builder.Services.AddCors(options =>
+    options.AddPolicy("Frontend", policy => policy
+        .WithOrigins(
+            builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
+            ?? Array.Empty<string>())
+        .AllowAnyHeader()
+        .AllowAnyMethod()));
+
 // ================================================================
 // 0. RATE LIMITING — GIỚI HẠN SỐ REQUEST
 // ================================================================
@@ -322,6 +331,9 @@ if (app.Environment.IsDevelopment())
 
 // Chuyển hướng request HTTP sang HTTPS.
 app.UseHttpsRedirection();
+
+// CORS phải chạy trước Rate Limiter và Authentication để xử lý preflight.
+app.UseCors("Frontend");
 
 // Bật middleware Rate Limiting.
 // Endpoint chỉ bị giới hạn theo policy nếu được gắn [EnableRateLimiting]

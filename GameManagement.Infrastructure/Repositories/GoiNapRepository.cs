@@ -151,7 +151,7 @@ public class GoiNapRepository : IGoiNapRepository
 
             return MapGoiNap(reader);
         }
-        catch (SqlException ex) when (ex.Number == 50302)
+        catch (SqlException ex) when (ex.Number is 50051 or 50052)
         {
             throw new InvalidGoiNapException(ex.Message);
         }
@@ -159,48 +159,55 @@ public class GoiNapRepository : IGoiNapRepository
 
     public async Task<GoiNap> UpdateAsync(GoiNap goiNap)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.OpenAsync();
-
-        using var command = new SqlCommand(
-            "dbo.sp_GoiNap_Update", connection);
-
-        command.CommandType = CommandType.StoredProcedure;
-
-        command.Parameters.Add("@GoiNapId", SqlDbType.Int)
-            .Value = goiNap.GoiNapId;
-
-        command.Parameters.Add("@GameId", SqlDbType.Int)
-            .Value = goiNap.GameId;
-
-        command.Parameters.Add("@TenGoiNap", SqlDbType.NVarChar, 200)
-            .Value = goiNap.TenGoiNap;
-
-        var giaGocParameter = command.Parameters.Add(
-            "@GiaGoc", SqlDbType.Decimal);
-
-        giaGocParameter.Precision = 18;
-        giaGocParameter.Scale = 2;
-        giaGocParameter.Value = goiNap.GiaGoc;
-
-        command.Parameters.Add("@TrangThai", SqlDbType.VarChar, 30)
-            .Value = goiNap.TrangThai.ToString();
-
-        command.Parameters.Add("@NguoiCapNhatId", SqlDbType.Int)
-            .Value = (object?)goiNap.NguoiCapNhatId ?? DBNull.Value;
-
-        command.Parameters.Add("@ChietKhauId", SqlDbType.Int)
-            .Value = (object?)goiNap.ChietKhauId ?? DBNull.Value;
-
-        using var reader = await command.ExecuteReaderAsync();
-
-        if (!await reader.ReadAsync())
+        try
         {
-            throw new GoiNapNotFoundException(
-                "Gói nạp không tồn tại.");
-        }
+            using var connection = _connectionFactory.CreateConnection();
+            await connection.OpenAsync();
 
-        return MapGoiNap(reader);
+            using var command = new SqlCommand(
+                "dbo.sp_GoiNap_Update", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@GoiNapId", SqlDbType.Int)
+                .Value = goiNap.GoiNapId;
+
+            command.Parameters.Add("@GameId", SqlDbType.Int)
+                .Value = goiNap.GameId;
+
+            command.Parameters.Add("@TenGoiNap", SqlDbType.NVarChar, 200)
+                .Value = goiNap.TenGoiNap;
+
+            var giaGocParameter = command.Parameters.Add(
+                "@GiaGoc", SqlDbType.Decimal);
+
+            giaGocParameter.Precision = 18;
+            giaGocParameter.Scale = 2;
+            giaGocParameter.Value = goiNap.GiaGoc;
+
+            command.Parameters.Add("@TrangThai", SqlDbType.VarChar, 30)
+                .Value = goiNap.TrangThai.ToString();
+
+            command.Parameters.Add("@NguoiCapNhatId", SqlDbType.Int)
+                .Value = (object?)goiNap.NguoiCapNhatId ?? DBNull.Value;
+
+            command.Parameters.Add("@ChietKhauId", SqlDbType.Int)
+                .Value = (object?)goiNap.ChietKhauId ?? DBNull.Value;
+
+            using var reader = await command.ExecuteReaderAsync();
+
+            if (!await reader.ReadAsync())
+            {
+                throw new GoiNapNotFoundException(
+                    "Gói nạp không tồn tại.");
+            }
+
+            return MapGoiNap(reader);
+        }
+        catch (SqlException ex) when (ex.Number is 50051 or 50052)
+        {
+            throw new InvalidGoiNapException(ex.Message);
+        }
     }
 
     public async Task<bool> DeleteAsync(

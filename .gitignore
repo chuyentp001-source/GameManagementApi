@@ -1,12 +1,27 @@
-## Ignore Visual Studio & .NET temporary files
-.vs/
+```gitignore
+# Build output
 bin/
 obj/
-.vscode/
-.idea/
-*.log
-TestResults/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio
+.vs/
 *.user
-*.userosscache
 *.suo
-appsettings.Development.json
+
+# Logs
+*.log
+
+# Local secrets and environment settings
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+secrets.json
+
+# User-specific files
+*.user
+*.sln.docstates
+```

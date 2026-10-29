@@ -191,6 +191,10 @@ public class DonHangRepository : IDonHangRepository
                     statusCode = 400;
                     message = "Game đang bảo trì, không thể tạo đơn hàng.";
                     break;
+                case 50042:
+                    statusCode = 400;
+                    message = "Game này không sử dụng Server.";
+                    break;
                 case 50106:
                     statusCode = 400;
                     message = "Số dư ví không đủ để thanh toán.";

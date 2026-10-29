@@ -10,16 +10,35 @@ if ($Db -notlike "*_Test") { Fail "Chỉ chạy trên database *_Test." }
 
 # Chạy cùng một câu lệnh ở 2 tiến trình, bắt đầu cùng một thời điểm
 function Invoke-Parallel([string]$Body, [int]$Count = 2) {
-    $when = (Get-Date).AddSeconds(6).ToString("HH:mm:ss")
-    $sql = "WAITFOR TIME '$when'; BEGIN TRY $Body PRINT 'RESULT:OK'; END TRY BEGIN CATCH PRINT 'RESULT:ERR:' + CAST(ERROR_NUMBER() AS VARCHAR(10)); END CATCH"
+ $sql = "WAITFOR DELAY '00:00:02'; BEGIN TRY $Body PRINT 'RESULT:OK'; END TRY BEGIN CATCH PRINT 'RESULT:ERR:' + CAST(ERROR_NUMBER() AS VARCHAR(10)); END CATCH"
+
     $jobs = 1..$Count | ForEach-Object {
         Start-Job -ArgumentList $Server, $Db, $sql -ScriptBlock {
-            param($s, $d, $q) sqlcmd -S $s -d $d -E -b -I -h -1 -W -Q $q
+            param($s, $d, $q)
+            sqlcmd -S $s -d $d -E -b -I -h -1 -W -t 15 -Q $q
         }
     }
-    $jobs | Wait-Job | Out-Null
-    $out = ($jobs | ForEach-Object { (Receive-Job $_) -join "`n" }) -join "`n"
-    $jobs | Remove-Job
+
+    $finished = $jobs | Wait-Job -Timeout 30
+
+    $unfinished = @($jobs | Where-Object { $_.State -eq "Running" })
+    if ($unfinished.Count -gt 0) {
+        $jobs | Stop-Job
+        $jobs | Remove-Job -Force
+        throw "Test đồng thời vượt quá 30 giây; đã dừng các job còn chạy."
+    }
+
+    $out = ($jobs | ForEach-Object {
+        Receive-Job $_
+    }) -join "`n"
+
+    $failedJobs = @($jobs | Where-Object { $_.State -ne "Completed" })
+    $jobs | Remove-Job -Force
+
+    if ($failedJobs.Count -gt 0) {
+        throw "Một hoặc nhiều job chạy SQL thất bại."
+    }
+
     return $out
 }
 

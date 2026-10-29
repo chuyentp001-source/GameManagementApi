@@ -1,9 +1,7 @@
-USE [GameManagementDB_Test];
-GO
 SET NOCOUNT ON;
 
-IF DB_NAME() <> N'GameManagementDB_Test'
-    THROW 51299, N'Chi duoc chay file nay tren GameManagementDB_Test.', 1;
+IF DB_NAME() NOT LIKE N'%[_]Test'
+    THROW 51299, N'Chi duoc chay file nay tren database *_Test.', 1;
 
 DECLARE @KetQua TABLE
 (

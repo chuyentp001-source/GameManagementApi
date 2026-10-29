@@ -1,10 +1,8 @@
-USE [GameManagementDB_Test];
-GO
 SET NOCOUNT ON;
 SET XACT_ABORT OFF;
 
-IF DB_NAME() <> N'GameManagementDB_Test'
-    THROW 51199, N'Chi duoc chay file nay tren GameManagementDB_Test.', 1;
+IF DB_NAME() NOT LIKE N'%[_]Test'
+    THROW 51199, N'Chi duoc chay file nay tren database *_Test.', 1;
 
 DECLARE @Tag NVARCHAR(10) = LEFT(REPLACE(CONVERT(NVARCHAR(36), NEWID()), '-', ''), 10);
 DECLARE @AccountId INT, @AdminId INT, @DonHangId BIGINT;
