@@ -118,6 +118,9 @@ public class DonHangRepository : IDonHangRepository
         command.Parameters.Add("@NguoiTaoId", SqlDbType.Int)
             .Value = (object?)donHang.NguoiTaoId ?? DBNull.Value;
 
+        command.Parameters.Add("@MaVoucher", SqlDbType.VarChar, 50)
+            .Value = (object?)donHang.MaVoucherApDung ?? DBNull.Value;
+
         try
         {
             using var reader = await command.ExecuteReaderAsync();
@@ -198,6 +201,15 @@ public class DonHangRepository : IDonHangRepository
                 case 50106:
                     statusCode = 400;
                     message = "Số dư ví không đủ để thanh toán.";
+                    break;
+                case 50900:
+                    statusCode = 404;
+                    message = "Mã voucher không tồn tại.";
+                    break;
+
+                case 50901 or 50902 or 50903 or 50904 or 50905 or 50906 or 50907:
+                    statusCode = 400;
+                    message = ex.Message;
                     break;
 
                 default:

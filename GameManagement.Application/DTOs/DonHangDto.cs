@@ -59,6 +59,10 @@ public class CreateDonHangDto
 
     [StringLength(100, ErrorMessage = "Server không được vượt quá 100 ký tự.")]
     public string? Server { get; set; }
+
+    [StringLength(50, ErrorMessage = "Mã voucher không được vượt quá 50 ký tự.")]
+    public string? MaVoucher { get; set; }
+
     [Required(ErrorMessage = "Phương thức thanh toán không được để trống.")]
     public PhuongThucThanhToan? PhuongThucThanhToan { get; set; }
 }

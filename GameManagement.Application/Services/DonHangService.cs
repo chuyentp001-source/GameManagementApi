@@ -126,6 +126,9 @@ public class DonHangService : IDonHangService
         {
             AccountId = accountId,
             GoiNapId = dto.GoiNapId,
+            MaVoucherApDung = string.IsNullOrWhiteSpace(dto.MaVoucher)
+                ? null
+                : dto.MaVoucher.Trim().ToUpperInvariant(),
             TaiKhoanGame = dto.TaiKhoanGame.Trim(),
             Server = string.IsNullOrWhiteSpace(dto.Server)
                 ? null

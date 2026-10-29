@@ -12,6 +12,8 @@ public partial class DonHang
 
     public int? ChietKhauId { get; set; }
 
+    public string? MaVoucherApDung { get; set; }
+
     public string? TaiKhoanGame { get; set; } = null!;
 
     public string? Server { get; set; }
